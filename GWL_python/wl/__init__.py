@@ -1,1 +1,1 @@
-from wl.wl import WeisfeilerLeman
+from .wl import WeisfeilerLeman

@@ -1,1 +1,1 @@
-from gwl.gwl import GradualWeisfeilerLeman
+from .gwl import GradualWeisfeilerLeman

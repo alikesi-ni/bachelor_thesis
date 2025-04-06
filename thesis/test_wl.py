@@ -1,6 +1,8 @@
 import networkx as nx
 from torch_geometric.datasets import TUDataset
 from torch_geometric.utils import to_networkx
+
+from thesis.weisfeiler_leman import refine_color
 from utils import convert_to_disjoint_union_graph
 
 from GWL_python.wl.wl import WeisfeilerLeman
@@ -87,7 +89,10 @@ print(f"Loaded {len(dataset)} graphs from {dataset_name}.")
 
 disjoint_graph = convert_to_disjoint_union_graph(dataset)
 
-wl = WeisfeilerLeman(refinement_steps=40)
-wl.refine_color(disjoint_graph)
+# wl = WeisfeilerLeman(refinement_steps=2)
+# wl.refine_color(disjoint_graph)
 
+refine_color(disjoint_graph, 20)
+
+print("Done)")
 # wl_one_iteration(disjoint_graph)

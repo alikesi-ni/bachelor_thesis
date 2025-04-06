@@ -1,0 +1,1 @@
+{'refinement-steps': 6, 'num-clusters': 8, 'cluster-init-method': 'kmeans++', 'C': 1000.0, 'average-accuracy': 76.0}

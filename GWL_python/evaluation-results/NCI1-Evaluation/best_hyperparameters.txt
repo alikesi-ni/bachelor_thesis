@@ -1,0 +1,1 @@
+{'refinement-steps': 10, 'num-clusters': 16, 'cluster-init-method': 'forgy', 'C': 10.0, 'average-accuracy': 77.42}

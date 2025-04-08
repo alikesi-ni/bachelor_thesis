@@ -1,6 +1,9 @@
+from collections import defaultdict
 import networkx as nx
 import numpy as np
-from scipy.sparse import csr_matrix, csr_array
+from scipy.sparse import csr_array
+
+from thesis.read_data_utils import dataset_to_graphs
 
 
 class ColorStats:
@@ -16,7 +19,7 @@ class ColorStats:
     def resize(self, v, n):
         new_stats = ColorStats(v, n)
         m = self.n
-        new_stats.neighbor = self.neighbor  # assuming already resized outside
+        new_stats.neighbor = self.neighbor  # assumes already resized
         new_stats.upper_base[:m, :m] = self.upper_base
         new_stats.lower_base[:m, :m] = self.lower_base
         new_stats.counts_base[:m, :m] = self.counts_base
@@ -25,7 +28,7 @@ class ColorStats:
 
 
 class QuasiStableColoringGraph:
-    def __init__(self, graph: nx.Graph, q=1.0, n_colors=np.inf, weighting=False):
+    def __init__(self, graph: nx.Graph, q=0.0, n_colors=np.inf, weighting=False):
         self.graph = graph
         self.q = q
         self.n_colors = n_colors
@@ -33,6 +36,21 @@ class QuasiStableColoringGraph:
 
         self.partitions = []
         self.color_stats = None
+        self.weights = None
+        self.next_color_id = 0
+
+        self.__assert_nodes_start_from_zero()
+
+    def __assert_nodes_start_from_zero(self):
+        nodes = list(self.graph.nodes)
+        sorted_nodes = sorted(nodes)
+
+        assert sorted_nodes[0] == 0, "Graph node indices must start at 0"
+        assert sorted_nodes == list(range(len(nodes))), (
+            f"Graph nodes must be consecutive integers from 0 to {len(nodes) - 1}. "
+            f"Found: {sorted_nodes}"
+        )
+
 
     def partition_matrix(self):
         num_nodes = sum(len(partition) for partition in self.partitions)
@@ -46,7 +64,7 @@ class QuasiStableColoringGraph:
                 I[i] = node_id
                 J[i] = partition_idx
                 i += 1
-        return csr_array((V, (I, J)), shape=(max(I) + 1, num_partitions))
+        return csr_array((V, (I, J)), shape=(self.graph.number_of_nodes(), num_partitions))
 
     def update_stats(self):
         P_sparse = self.partition_matrix()
@@ -85,6 +103,9 @@ class QuasiStableColoringGraph:
                 ejected.append(node_id)
             else:
                 retained.append(node_id)
+
+        assert retained and ejected
+
         self.partitions[witness_i] = retained
         self.partitions.append(ejected)
 
@@ -123,10 +144,47 @@ class QuasiStableColoringGraph:
                 self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m]
             )
 
+        for partition in self.partitions:
+            for node in partition:
+                self.graph.nodes[node]["color-stack"].append(self.next_color_id)
+            self.next_color_id += 1
+
     def refine(self):
-        self.partitions = [list(self.graph.nodes)]
+        self.partitions = []
+
+        node_labels = nx.get_node_attributes(self.graph, "label")
+        are_nodes_labeled = (len(node_labels) != 0) and (len(set(node_labels.values())) > 1)
+
+        self.next_color_id = 0
+
+        if are_nodes_labeled:
+            node_color_attributes = {}
+            label_color_map = {}
+
+            for node, label in node_labels.items():
+                if label in label_color_map:
+                    node_color_attributes[node] = [label_color_map[label]]
+                else:
+                    label_color_map[label] = self.next_color_id
+                    node_color_attributes[node] = [self.next_color_id]
+                    self.next_color_id += 1
+
+            nx.set_node_attributes(self.graph, node_color_attributes, "color-stack")
+
+        else:
+            nx.set_node_attributes(self.graph, {node: [self.next_color_id] for node in self.graph.nodes}, "color-stack")
+            self.next_color_id += 1
+
+        # initialize partitions by grouping nodes by their initial color
+        color_groups = defaultdict(list)
+        for node, color_stack in nx.get_node_attributes(self.graph, "color-stack").items():
+            color = color_stack[-1]
+            color_groups[color].append(node)
+
+        self.partitions = list(color_groups.values())
+
         self.weights = nx.adjacency_matrix(self.graph, dtype=np.float64)
-        self.color_stats = ColorStats(self.graph.number_of_nodes(), min(self.n_colors, 128))
+        self.color_stats = ColorStats(len(self.graph), min(self.n_colors, 128))
         self.update_stats()
 
         while len(self.partitions) < self.n_colors:
@@ -134,7 +192,6 @@ class QuasiStableColoringGraph:
                 self.color_stats = self.color_stats.resize(self.color_stats.v, self.color_stats.n * 2)
 
             witness_i, witness_j, split_deg, q_error = self.pick_witness()
-
             if q_error <= self.q:
                 break
 
@@ -164,6 +221,9 @@ edges = [
 # Add edges to the graph
 g.add_edges_from(edges)
 
+g = dataset_to_graphs("./data", "PTC_FM")[1]
+g = nx.convert_node_labels_to_integers(g, first_label=0)
+
 qsc = QuasiStableColoringGraph(g, 1.0)
-qsc.refine()
+print(qsc.refine())
 

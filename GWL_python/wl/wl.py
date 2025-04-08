@@ -64,8 +64,10 @@ class WeisfeilerLeman:
             nx.set_node_attributes(graph, {node: [color] for node in graph.nodes}, "color-stack")
             color += 1
 
+        print(f"Number of colors after iteration 0: {color}")
+
         # refine color for given number of refinement steps
-        for _ in range(self.h):
+        for i in range(self.h):
 
             color_hashes = dict()
             color_map = dict()
@@ -101,6 +103,18 @@ class WeisfeilerLeman:
             # assign the refined color to the nodes
             for node in graph.nodes:
                 graph.nodes[node]["color-stack"].extend([color_map[color_hashes[node]]])
+
+            # Count the number of unique colors after refinement
+            unique_colors = set()
+
+            # Iterate through each node to collect the last color in the color-stack
+            for node in graph.nodes:
+                # Access the last color in the color-stack
+                last_color = graph.nodes[node]["color-stack"][-1]
+                # Add the last color to the set (to ensure uniqueness)
+                unique_colors.add(last_color)
+
+            print(f"Number of colors after iteration {i + 1}: {len(unique_colors)}")
 
         # indicating that the refinement process is completed
         self.__is_refined = True

@@ -3,11 +3,11 @@ from typing import Union
 
 import networkx as nx
 
-from clustering.kmeans import KMeans
-from color_hierarchy.color_node import ColorNode
-from color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
+from GWL_python.clustering.kmeans import KMeans
+from GWL_python.color_hierarchy.color_node import ColorNode
+from GWL_python.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
 
-import gwl.utils as gwl_utils
+import GWL_python.gwl.utils as gwl_utils
 
 
 class GradualWeisfeilerLeman:

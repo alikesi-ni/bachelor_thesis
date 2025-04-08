@@ -52,47 +52,12 @@ dataset = TUDataset(root, dataset_name)
 
 print(f"Loaded {len(dataset)} graphs from {dataset_name}.")
 
-# def convert_to_disjoint_union_graph(dataset):
-#     """
-#     Convert all graphs in the dataset to a single disjoint union graph while preserving node attributes.
-#     """
-#     networkx_graphs = []
-#
-#     for data in dataset:
-#         # Convert the graph to NetworkX format with the node attributes from 'x'
-#         G = to_networkx(data, node_attrs=["x"], to_undirected=True)
-#
-#         # Undo the one-hot encoding and set the 'label' attribute
-#         for node, attrs in G.nodes(data=True):
-#             if "x" in attrs:
-#                 # Convert one-hot encoded feature list to an integer label
-#                 try:
-#                     label = attrs["x"].index(1.0) # Get the index of the max value (1.0 in one-hot)
-#                 except Exception:
-#                     label = -1  # In case of unexpected data format
-#                 G.nodes[node]["label"] = label
-#                 # Remove the original 'x' attribute since it is now redundant
-#                 del G.nodes[node]["x"]
-#             else:
-#                 # Default label if no attribute present
-#                 G.nodes[node]["label"] = -1
-#
-#         # Add the graph to the list
-#         networkx_graphs.append(G)
-#
-#     # Create a single disjoint union graph from the list of NetworkX graphs
-#     disjoint_union_graph = nx.disjoint_union_all(networkx_graphs)
-#     return disjoint_union_graph
-
-# disjoint_graph = convert_to_disjoint_union_graph(dataset[:20])
-
-
 disjoint_graph = convert_to_disjoint_union_graph(dataset)
 
-# wl = WeisfeilerLeman(refinement_steps=2)
-# wl.refine_color(disjoint_graph)
+wl = WeisfeilerLeman(refinement_steps=13)
+wl.refine_color(disjoint_graph)
 
-refine_color(disjoint_graph, 20)
+# refine_color(disjoint_graph, 3)
 
 print("Done)")
 # wl_one_iteration(disjoint_graph)

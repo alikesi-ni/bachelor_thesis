@@ -1,4 +1,5 @@
 import networkx as nx
+from matplotlib import pyplot as plt
 from torch_geometric.datasets import TUDataset
 from torch_geometric.utils import to_networkx
 from torch_geometric.data.data import Data
@@ -113,37 +114,30 @@ def convert_to_disjoint_union_graph(dataset):
     disjoint_union_graph = nx.disjoint_union_all(networkx_graphs)
     return disjoint_union_graph
 
+def count_labeled_edges(G):
+    """
+    Count the number of edges in a NetworkX graph that have a 'label' attribute.
+    """
+    labeled_edge_count = sum(1 for _, _, data in G.edges(data=True) if "label" in data)
+    return labeled_edge_count
 
-dataset_names = [
-    "KKI", "PTC_FM", "COLLAB", "DD", "IMDB-BINARY", "MSRC_9",
-    "NCI1", "REDDIT-BINARY", "MUTAG", "ENZYMES", "PROTEINS"
-]
+def draw_graph_with_labels(G):
+    """
+    Draw a NetworkX graph with both node labels and edge labels.
+    """
+    pos = nx.spring_layout(G)  # Position nodes using the spring layout
 
-for dataset_name in dataset_names:
-    try:
-        print(f"Loading dataset: {dataset_name}")
-        root = './data/'
-        dataset = TUDataset(root, dataset_name)
-        analyze(dataset)
-    except Exception as e:
-        print(f"Error loading dataset {dataset_name}: {e}")
+    # Draw the graph
+    plt.figure(figsize=(8, 8))
+    nx.draw(G, pos, with_labels=False, node_color="lightblue", node_size=700, font_size=10)
 
-# dataset_name = 'MUTAG'
-dataset_name = 'KKI'
-# dataset_name = 'PTC_FM'
-# dataset_name = 'COLLAB'
-# dataset_name = 'DD'
-# dataset_name = 'IMDB-BINARY'
+    # Extract and display node labels
+    node_labels = nx.get_node_attributes(G, "label")
+    nx.draw_networkx_labels(G, pos, labels=node_labels, font_size=12, font_color="black")
 
-root = './data/'
-dataset = TUDataset(root, dataset_name)
+    # Extract and display edge labels
+    edge_labels = nx.get_edge_attributes(G, "label")
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=10, font_color="red")
 
-# G = nx.complete_graph(5)
-
-# graphs = convert_dataset_to_networkx_graphs(dataset)
-disjoint_union_graph = convert_to_disjoint_union_graph(dataset)
-# print(graphs)
-
-# root = './'
-# dataset = TUDataset(root, 'PROTEINS', cleaned=True)
-# print(dataset)
+    plt.title("Graph with Node and Edge Labels")
+    plt.show()

@@ -1,6 +1,6 @@
 import numpy as np
 
-from kernels.dot_product import DotProductKernel
+from GWL_python.kernels.dot_product import DotProductKernel
 
 
 class WLSubtreeKernel:

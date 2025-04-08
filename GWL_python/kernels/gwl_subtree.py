@@ -1,4 +1,4 @@
-from kernels.wl_subtree import WLSubtreeKernel
+from GWL_python.kernels.wl_subtree import WLSubtreeKernel
 
 
 class GWLSubtreeKernel(WLSubtreeKernel):

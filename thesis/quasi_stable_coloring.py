@@ -126,7 +126,7 @@ class QuasiStableColoringGraph:
     def refine(self):
         self.partitions = [list(self.graph.nodes)]
         self.weights = nx.adjacency_matrix(self.graph, dtype=np.float64)
-        self.color_stats = ColorStats(len(self.graph), min(self.n_colors, 128))
+        self.color_stats = ColorStats(self.graph.number_of_nodes(), min(self.n_colors, 128))
         self.update_stats()
 
         while len(self.partitions) < self.n_colors:

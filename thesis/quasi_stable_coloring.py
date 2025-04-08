@@ -1,12 +1,13 @@
 import networkx as nx
 import numpy as np
-from scipy.sparse import csr_matrix, dok_matrix, hstack
+from scipy.sparse import csr_matrix, hstack, csr_array
+
 
 class ColorStats:
     def __init__(self, v, n):
         self.v = v
         self.n = n
-        self.neighbor = dok_matrix((v, n), dtype=np.float64)
+        self.neighbor = csr_array((v, n), dtype=np.float64)
         self.upper_base = np.zeros((n, n), dtype=np.float64)
         self.lower_base = np.full((n, n), np.inf, dtype=np.float64)
         self.counts_base = np.zeros((n, n), dtype=np.uint)
@@ -15,11 +16,13 @@ class ColorStats:
     def resize(self, v, n):
         new_stats = ColorStats(v, n)
         m = self.n
+        new_stats.neighbor = self.neighbor # no need to resize - is already dynamically resized in code
         new_stats.upper_base[:m, :m] = self.upper_base
         new_stats.lower_base[:m, :m] = self.lower_base
         new_stats.counts_base[:m, :m] = self.counts_base
         new_stats.errors_base[:m, :m] = self.errors_base
         return new_stats
+
 
 
 def partition_matrix(partitions):
@@ -34,7 +37,7 @@ def partition_matrix(partitions):
             I[i] = node_id
             J[i] = partition_idx
             i += 1
-    return csr_matrix((V, (I, J)), shape=(num_nodes, num_partitions))
+    return csr_array((V, (I, J)), shape=(num_nodes, num_partitions))
 
 
 def update_stats(stats, weights, partitions, weighting=False):
@@ -92,8 +95,8 @@ def update_stats_split(stats, weights, partitions, old, new, weighting=False):
     old_nodes = partitions[old]
     new_nodes = partitions[new]
 
-    zero_column = csr_matrix((stats.v, 1), dtype=np.float64)
-    stats.neighbor = hstack([stats.neighbor, zero_column])
+    rows, cols = stats.neighbor.shape
+    stats.neighbor.resize(rows, cols + 1)
 
     # Update columns for old and new colors
     old_degs = np.array(weights[:, old_nodes].sum(axis=1)).flatten()
@@ -142,6 +145,8 @@ def q_color(graph: nx.Graph, q=0.0, n_colors=np.inf, warm_start=None, weighting=
     update_stats(color_stats, weights, partitions, weighting=weighting)
 
     while len(partitions) < n_colors:
+        if len(partitions) == color_stats.n:
+            color_stats = color_stats.resize(color_stats.v, color_stats.n * 2)
         witness_i, witness_j, split_deg, q_error = pick_witness(partitions, color_stats)
         if q_error <= q:
             break
@@ -171,3 +176,4 @@ edges = [
 g.add_edges_from(edges)
 
 q_color(g)
+

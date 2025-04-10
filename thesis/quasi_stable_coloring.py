@@ -3,6 +3,8 @@ import networkx as nx
 import numpy as np
 from scipy.sparse import csr_array
 
+from GWL_python.color_hierarchy.color_node import ColorNode
+from thesis.colored_graph import ColoredGraph
 from thesis.other_utils import generate_feature_vector
 from thesis.read_data_utils import dataset_to_graphs
 
@@ -29,8 +31,9 @@ class ColorStats:
 
 
 class QuasiStableColoringGraph:
-    def __init__(self, graph: nx.Graph, q=0.0, n_colors=np.inf, weighting=False):
-        self.graph = graph
+    def __init__(self, colored_graph: ColoredGraph, q=0.0, n_colors=np.inf, weighting=False):
+        self.colored_graph = colored_graph
+        self.graph = colored_graph.graph
         self.q = q
         self.n_colors = n_colors
         self.weighting = weighting
@@ -38,19 +41,14 @@ class QuasiStableColoringGraph:
         self.partitions = []
         self.color_stats = None
         self.weights = None
-        self.next_color_id = 0
 
         self.__assert_nodes_start_from_zero()
 
     def __assert_nodes_start_from_zero(self):
         nodes = list(self.graph.nodes)
         sorted_nodes = sorted(nodes)
-
-        assert sorted_nodes[0] == 0, "Graph node indices must start at 0"
-        assert sorted_nodes == list(range(len(nodes))), (
-            f"Graph nodes must be consecutive integers from 0 to {len(nodes) - 1}. "
-            f"Found: {sorted_nodes}"
-        )
+        assert sorted_nodes[0] == 0, "Node indices must start at 0"
+        assert sorted_nodes == list(range(len(nodes))), "Node indices must be consecutive integers starting from 0"
 
 
     def partition_matrix(self):
@@ -146,9 +144,12 @@ class QuasiStableColoringGraph:
             )
 
         for partition in self.partitions:
+            color_id = self.colored_graph.next_color_id
             for node in partition:
-                self.graph.nodes[node]["color-stack"].append(self.next_color_id)
-            self.next_color_id += 1
+                self.graph.nodes[node]["color-stack"].append(color_id)
+            self.colored_graph.next_color_id += 1
+
+        self.colored_graph.color_stack_height += 1
 
     def refine(self):
         self.partitions = []

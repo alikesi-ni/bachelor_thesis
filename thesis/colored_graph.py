@@ -10,7 +10,7 @@ from thesis.color_palette import ColorPalette
 
 class ColoredGraph:
     def __init__(self, graph: nx.Graph):
-        self.graph = graph
+        self.graph = graph.copy()
         self.next_color_id = 0
         self.color_stack_height = 0
         self.color_hierarchy_tree = None
@@ -134,4 +134,50 @@ class ColoredGraph:
 
         plt.title(f"Colored Graph at Hierarchy Level {level}")
         plt.show()
+
+    def get_num_colors(self, hierarchy_level: int = -1) -> int:
+        """
+        Returns the number of unique colors at a given hierarchy level.
+
+        Parameters
+        ----------
+        hierarchy_level : int
+            The level of the color-stack to evaluate.
+            Defaults to the final level (-1).
+
+        Returns
+        -------
+        int
+            Number of unique colors at that hierarchy level.
+        """
+        if self.color_stack_height == 0:
+            raise ValueError("Color stack is not initialized.")
+
+        if hierarchy_level == -1:
+            level = self.color_stack_height - 1
+        else:
+            level = hierarchy_level
+
+        if not (0 <= level < self.color_stack_height):
+            raise ValueError(f"Invalid hierarchy_level {level}. Must be between 0 and {self.color_stack_height - 1}.")
+
+        unique_colors = {data["color-stack"][level] for _, data in self.graph.nodes(data=True)}
+        return len(unique_colors)
+
+    def assert_consistent_color_stack_height(self):
+        """
+        Asserts that all nodes in the graph have a color-stack of the same length as self.color_stack_height.
+
+        Raises
+        ------
+        AssertionError
+            If any node's color-stack length does not match self.color_stack_height.
+        """
+        for node, data in self.graph.nodes(data=True):
+            actual_height = len(data.get("color-stack", []))
+            assert actual_height == self.color_stack_height, (
+                f"Node {node} has color-stack of height {actual_height}, "
+                f"expected {self.color_stack_height}."
+            )
+
 

@@ -4,7 +4,7 @@ from thesis.colored_graph import ColoredGraph
 from thesis.other_utils import generate_feature_vector
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
 from thesis.read_data_utils import dataset_to_graphs
-from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoring
+from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoringGraph
 
 # Create an undirected graph
 g = nx.Graph()
@@ -28,43 +28,40 @@ g.add_edges_from(edges)
 g = dataset_to_graphs("./data", "PTC_FM")[1]
 g = nx.convert_node_labels_to_integers(g, first_label=0)
 
-h = g.copy()
+print("Number of nodes:", g.number_of_nodes())
 
 # qsc = QuasiStableColoringGraph(g, 1.0)
 # print(qsc.refine())
 # feature_vector = generate_feature_vector(g)
 # print(dict(sorted(feature_vector.items())))
 
-colored_graph = ColoredGraph(g)
-# colored_graph.draw()
-
-print(colored_graph.graph.number_of_nodes())
-
-# Run QSC refinement
-qsc = QuasiStableColoringGraph(colored_graph, q=0)
+colored_graph_a = ColoredGraph(g)
+qsc = QuasiStableColoringGraph(colored_graph_a, q=0)
 qsc.refine()
 
+colored_graph_a.assert_consistent_color_stack_height()
 unique_colors = qsc.colored_graph.get_num_colors()
-print(qsc.graph.number_of_nodes())
-print(unique_colors)
+
+print("### Quasi Stable Coloring ###")
+print(f"Number of unique colors: {unique_colors}")
+print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
+
+colored_graph_a.draw()
 
 colored_graph_b = ColoredGraph(g)
-wl = WeisfeilerLemanColoring(colored_graph_b, refinement_steps=9)
+wl = WeisfeilerLemanColoringGraph(colored_graph_b, refinement_steps=9)
 wl.refine()
 
 colored_graph_b.assert_consistent_color_stack_height()
-
 unique_colors = wl.colored_graph.get_num_colors()
-print(unique_colors)
 
-# # Visualize
-# for level in range(colored_graph.color_stack_height):
-#     colored_graph.draw(hierarchy_level=level)
+print("### Quasi Stable Coloring ###")
+print(f"Number of unique colors: {unique_colors}")
+print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
 
+colored_graph_b.draw()
 
-# qsc.colored_graph.color_hierarchy_tree.visualize_tree()
-#
 # # Draw the graph at each refinement level
-# for level in range(colored_graph.color_stack_height):
+# for level in range(colored_graph_a.color_stack_height):
 #     print(f"\nDrawing graph at refinement level {level}")
-#     colored_graph.draw(hierarchy_level=level)
+#     colored_graph_a.draw(hierarchy_level=level)

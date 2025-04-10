@@ -3,7 +3,7 @@ import networkx as nx
 from thesis.colored_graph import ColoredGraph
 
 
-class WeisfeilerLemanColoring:
+class WeisfeilerLemanColoringGraph:
     def __init__(self, colored_graph: ColoredGraph, refinement_steps: int = 1):
         self.colored_graph = colored_graph
         self.graph = colored_graph.graph

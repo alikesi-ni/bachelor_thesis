@@ -23,7 +23,7 @@ class ColorNode:
     def __init__(self, color: int = None) -> None:
         self.color = color
         self.children: list[Self] = list()
-        self.associated_vertices = None
+        self.associated_vertices = []
 
     def __eq__(self, other: Self):
         return self.color == other.color

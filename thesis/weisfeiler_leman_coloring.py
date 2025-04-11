@@ -1,6 +1,7 @@
 import networkx as nx
 
 from thesis.colored_graph import ColoredGraph
+from thesis.other_utils import has_distinct_edge_labels
 
 
 class WeisfeilerLemanColoringGraph:
@@ -8,10 +9,9 @@ class WeisfeilerLemanColoringGraph:
         self.colored_graph = colored_graph
         self.graph = colored_graph.graph
         self.refinement_steps = refinement_steps
-        self.edge_labels = nx.get_edge_attributes(self.graph, "label")
-        self.are_edges_labeled = len(self.edge_labels) != 0
 
     def refine(self):
+        are_edges_labeled = has_distinct_edge_labels(self.graph)
         for i in range(self.refinement_steps):
             color_hashes = {}
             color_map = {}
@@ -19,7 +19,7 @@ class WeisfeilerLemanColoringGraph:
             for node in self.graph.nodes:
                 own_color = str(self.graph.nodes[node]["color-stack"][-1])
 
-                if self.are_edges_labeled:
+                if are_edges_labeled:
                     neighbor_hashes = []
                     for neighbor in self.graph.neighbors(node):
                         edge = (node, neighbor) if (node, neighbor) in self.edge_labels else (neighbor, node)

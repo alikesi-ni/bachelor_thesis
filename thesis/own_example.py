@@ -1,7 +1,7 @@
 import networkx as nx
 
 from thesis.colored_graph import ColoredGraph
-from thesis.other_utils import generate_feature_vector
+from thesis.other_utils import generate_feature_vector, remove_node_labels
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
 from thesis.read_data_utils import dataset_to_graphs
 from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoringGraph
@@ -30,6 +30,8 @@ g = nx.convert_node_labels_to_integers(g, first_label=0)
 
 print("Number of nodes:", g.number_of_nodes())
 
+# remove_node_labels(g)
+
 # qsc = QuasiStableColoringGraph(g, 1.0)
 # print(qsc.refine())
 # feature_vector = generate_feature_vector(g)
@@ -49,7 +51,7 @@ print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
 colored_graph_a.draw()
 
 colored_graph_b = ColoredGraph(g)
-wl = WeisfeilerLemanColoringGraph(colored_graph_b, refinement_steps=9)
+wl = WeisfeilerLemanColoringGraph(colored_graph_b, refinement_steps=1) # 9 for stable coloring
 wl.refine()
 
 colored_graph_b.assert_consistent_color_stack_height()
@@ -60,6 +62,9 @@ print(f"Number of unique colors: {unique_colors}")
 print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
 
 colored_graph_b.draw()
+
+colored_graph_b.build_color_hierarchy_tree()
+colored_graph_b.color_hierarchy_tree.visualize_tree()
 
 # # Draw the graph at each refinement level
 # for level in range(colored_graph_a.color_stack_height):

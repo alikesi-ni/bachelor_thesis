@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from GWL_python.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
 from GWL_python.color_hierarchy.color_node import ColorNode
 from thesis.color_palette import ColorPalette
+from thesis.other_utils import has_distinct_node_labels
 
 
 class ColoredGraph:
@@ -18,7 +19,7 @@ class ColoredGraph:
 
     def __color(self):
         node_labels = nx.get_node_attributes(self.graph, "label")
-        are_nodes_labeled = (len(node_labels) != 0) and (len(set(node_labels.values())) > 1)
+        are_nodes_labeled = has_distinct_node_labels(self.graph)
 
         if are_nodes_labeled:
             node_color_attributes = {}
@@ -41,26 +42,8 @@ class ColoredGraph:
 
             nx.set_node_attributes(self.graph, node_color_attributes, "color-stack")
 
-            for color_id, group_nodes in color_nodes_map.items():
-                child = ColorNode(color_id)
-                child.update_associated_vertices(group_nodes)
-                root.add_child(child)
-
-            self.color_hierarchy_tree = ColorHierarchyTree(
-                root_node=root,
-                is_root_node_artificial=True
-            )
-
         else:
             nx.set_node_attributes(self.graph, {node: [self.next_color_id] for node in self.graph.nodes}, "color-stack")
-
-            root = ColorNode(self.next_color_id)
-            root.update_associated_vertices(list(self.graph.nodes))
-            self.color_hierarchy_tree = ColorHierarchyTree(
-                root_node=root,
-                is_root_node_artificial=False
-            )
-
             self.next_color_id += 1
 
         self.color_stack_height = 1
@@ -180,4 +163,53 @@ class ColoredGraph:
                 f"expected {self.color_stack_height}."
             )
 
+    def build_color_hierarchy_tree(self):
+        """
+        Reconstructs the ColorHierarchyTree based on the node color-stacks in the graph.
+        Sets the result to self.color_hierarchy_tree.
+        """
 
+        node_map = {}  # color_id -> ColorNode
+        edge_links = set()  # (parent_color, child_color) pairs
+        level0_colors = set()
+
+        # Step 1: Create ColorNode objects and register parent → child relationships
+        for node, data in self.graph.nodes(data=True):
+            color_stack = data["color-stack"]
+            if len(color_stack) < 1:
+                continue
+
+            level0_colors.add(color_stack[0])
+
+            for i, color_id in enumerate(color_stack):
+                if color_id not in node_map:
+                    node_map[color_id] = ColorNode(color_id)
+                if i > 0:
+                    parent = color_stack[i - 1]
+                    edge_links.add((parent, color_id))
+
+        # Step 2: Assign associated vertices to leaf nodes (last color in stack)
+        for node, data in self.graph.nodes(data=True):
+            leaf_color = data["color-stack"][-1]
+            node_map[leaf_color].associated_vertices.append(node)
+
+        # Step 3: Link parent → children
+        for parent_id, child_id in edge_links:
+            node_map[parent_id].add_child(node_map[child_id])
+
+        # Step 4: Create artificial root if necessary
+        if len(level0_colors) == 1:
+            root = node_map[list(level0_colors)[0]]
+            is_root_artificial = False
+        else:
+            root = ColorNode(0)  # convention: 0 is reserved for root
+            for color_id in level0_colors:
+                root.add_child(node_map[color_id])
+            node_map[0] = root
+            is_root_artificial = True
+
+        # Register all in tree
+        tree = ColorHierarchyTree(root_node=root, is_root_node_artificial=is_root_artificial)
+        tree.node_map = {cid: cnode for cid, cnode in node_map.items()}
+
+        self.color_hierarchy_tree = tree

@@ -3,10 +3,8 @@ import networkx as nx
 import numpy as np
 from scipy.sparse import csr_array
 
-from GWL_python.color_hierarchy.color_node import ColorNode
 from thesis.colored_graph import ColoredGraph
-from thesis.other_utils import generate_feature_vector
-from thesis.read_data_utils import dataset_to_graphs
+from thesis.other_utils import has_distinct_node_labels
 
 
 class ColorStats:
@@ -155,7 +153,7 @@ class QuasiStableColoringGraph:
         self.partitions = []
 
         node_labels = nx.get_node_attributes(self.graph, "label")
-        are_nodes_labeled = (len(node_labels) != 0) and (len(set(node_labels.values())) > 1)
+        are_nodes_labeled = has_distinct_node_labels(self.graph)
 
         self.next_color_id = 0
 

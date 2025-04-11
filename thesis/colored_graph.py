@@ -90,7 +90,7 @@ class ColoredGraph:
         node_color_list = []
         node_labels = {}
         overflow_label_map = {}
-        label_index = 1
+        label_index = sum(1 for v in color_map.values() if v is not None) + 1
 
         for node, color_id in node_colors.items():
             hex_color = color_map.get(color_id)

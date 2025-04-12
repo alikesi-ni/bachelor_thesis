@@ -205,6 +205,7 @@ class ColoredGraph:
             root = ColorNode(0)  # convention: 0 is reserved for root
             for color_id in level0_colors:
                 root.add_child(node_map[color_id])
+            root.associated_vertices = list(self.graph.nodes)
             node_map[0] = root
             is_root_artificial = True
 

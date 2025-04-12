@@ -1,6 +1,9 @@
 import networkx as nx
 
+from GWL_python.gwl import GradualWeisfeilerLeman
 from thesis.colored_graph import ColoredGraph
+from thesis.gradual_weisfeiler_leman_coloring import GradualWeisfeilerLemanGraph
+from thesis.gwl_adapted import GWLAdapted
 from thesis.other_utils import generate_feature_vector, remove_node_labels
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
 from thesis.read_data_utils import dataset_to_graphs
@@ -37,34 +40,56 @@ print("Number of nodes:", g.number_of_nodes())
 # feature_vector = generate_feature_vector(g)
 # print(dict(sorted(feature_vector.items())))
 
-colored_graph_a = ColoredGraph(g)
-qsc = QuasiStableColoringGraph(colored_graph_a, q=0)
-qsc.refine()
+# colored_graph_a = ColoredGraph(g)
+# qsc = QuasiStableColoringGraph(colored_graph_a, q=0)
+# qsc.refine()
+#
+# colored_graph_a.assert_consistent_color_stack_height()
+# unique_colors = qsc.colored_graph.get_num_colors()
+#
+# print("### Quasi Stable Coloring ###")
+# print(f"Number of unique colors: {unique_colors}")
+# print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
+#
+# colored_graph_a.draw()
+#
+# colored_graph_b = ColoredGraph(g)
+# wl = WeisfeilerLemanColoringGraph(colored_graph_b, refinement_steps=1) # 9 for stable coloring
+# wl.refine()
+#
+# colored_graph_b.assert_consistent_color_stack_height()
+# unique_colors = wl.colored_graph.get_num_colors()
+#
+# print("### Quasi Stable Coloring ###")
+# print(f"Number of unique colors: {unique_colors}")
+# print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
+#
+# colored_graph_b.draw()
+#
+# colored_graph_b.build_color_hierarchy_tree()
+# colored_graph_b.color_hierarchy_tree.visualize_tree()
 
-colored_graph_a.assert_consistent_color_stack_height()
-unique_colors = qsc.colored_graph.get_num_colors()
+h = g.copy()
+k = g.copy()
+colored_graph_k = ColoredGraph(k)
 
-print("### Quasi Stable Coloring ###")
-print(f"Number of unique colors: {unique_colors}")
-print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
+gwl = GradualWeisfeilerLeman(refinement_steps=5, n_cluster=2)
+original_gwl_color_hierarchy = gwl.refine_color(h)
+original_gwl_feature_vector = gwl.generate_feature_vector(h)
+print(original_gwl_feature_vector)
 
-colored_graph_a.draw()
+# new_gwl_colored_graph = ColoredGraph(g)
+# new_gwl = GradualWeisfeilerLemanGraph(new_gwl_colored_graph, refinement_steps=5, n_cluster=2)
+# new_gwl.refine()
+# new_gwl_feature_vector = generate_feature_vector(new_gwl.graph)
+# print(new_gwl_feature_vector)
 
-colored_graph_b = ColoredGraph(g)
-wl = WeisfeilerLemanColoringGraph(colored_graph_b, refinement_steps=1) # 9 for stable coloring
-wl.refine()
+gwl_adapted = GWLAdapted(colored_graph_k, refinement_steps=5, n_cluster=2)
+gwl_adapted.refine()
+gwl_adapted_feature_vector = generate_feature_vector(colored_graph_k.graph)
+print(gwl_adapted_feature_vector)
 
-colored_graph_b.assert_consistent_color_stack_height()
-unique_colors = wl.colored_graph.get_num_colors()
-
-print("### Quasi Stable Coloring ###")
-print(f"Number of unique colors: {unique_colors}")
-print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
-
-colored_graph_b.draw()
-
-colored_graph_b.build_color_hierarchy_tree()
-colored_graph_b.color_hierarchy_tree.visualize_tree()
+# original_gwl_color_hierarchy.visualize_tree()
 
 # # Draw the graph at each refinement level
 # for level in range(colored_graph_a.color_stack_height):

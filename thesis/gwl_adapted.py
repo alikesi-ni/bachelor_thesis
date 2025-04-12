@@ -34,7 +34,7 @@ class GWLAdapted:
         # --- iterative refinement ---
         for _ in range(self.h):
             self.__renep()
-            self.update_colors()
+            # self.update_colors()
 
         # Finalize
         self.__is_refined = True
@@ -43,7 +43,6 @@ class GWLAdapted:
             self.color_hierarchy_tree.print_tree()
 
     def __renep(self) -> None:
-        last_color = self.color_hierarchy_tree.get_last_color()
         leaves = self.color_hierarchy_tree.get_leaves()
         edge_labels = nx.get_edge_attributes(self.graph, "label")
 
@@ -74,10 +73,14 @@ class GWLAdapted:
             for refined_nodes in clusters.values():
                 if not refined_nodes:
                     continue
-                last_color += 1
-                node = ColorNode(last_color)
+                node = ColorNode(self.colored_graph.next_color_id)
                 node.update_associated_vertices(refined_nodes)
                 leaf.add_child(node)
+                self.colored_graph.next_color_id += 1
+
+        for leaf in self.color_hierarchy_tree.get_leaves():
+            for node in leaf.associated_vertices:
+                self.graph.nodes[node]["color-stack"].extend([leaf.color])
 
     def update_colors(self) -> None:
         """

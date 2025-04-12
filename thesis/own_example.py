@@ -73,10 +73,10 @@ h = g.copy()
 k = g.copy()
 colored_graph_k = ColoredGraph(k)
 
-gwl = GradualWeisfeilerLeman(refinement_steps=5, n_cluster=2)
+gwl = GradualWeisfeilerLeman(refinement_steps=3, n_cluster=2)
 original_gwl_color_hierarchy = gwl.refine_color(h)
 original_gwl_feature_vector = gwl.generate_feature_vector(h)
-print(original_gwl_feature_vector)
+print(dict(sorted(original_gwl_feature_vector.items())))
 
 # new_gwl_colored_graph = ColoredGraph(g)
 # new_gwl = GradualWeisfeilerLemanGraph(new_gwl_colored_graph, refinement_steps=5, n_cluster=2)
@@ -84,10 +84,14 @@ print(original_gwl_feature_vector)
 # new_gwl_feature_vector = generate_feature_vector(new_gwl.graph)
 # print(new_gwl_feature_vector)
 
-gwl_adapted = GWLAdapted(colored_graph_k, refinement_steps=5, n_cluster=2)
+gwl_adapted = GWLAdapted(colored_graph_k, refinement_steps=3, n_cluster=2)
 gwl_adapted.refine()
 gwl_adapted_feature_vector = generate_feature_vector(colored_graph_k.graph)
-print(gwl_adapted_feature_vector)
+print(dict(sorted(gwl_adapted_feature_vector.items())))
+
+gwl_adapted.color_hierarchy_tree.visualize_tree()
+colored_graph_k.build_color_hierarchy_tree()
+colored_graph_k.color_hierarchy_tree.visualize_tree()
 
 # original_gwl_color_hierarchy.visualize_tree()
 

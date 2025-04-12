@@ -4,18 +4,19 @@ from GWL_python.clustering import KMeans
 from GWL_python.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
 from GWL_python.color_hierarchy.color_node import ColorNode
 from GWL_python.gwl.utils import generate_neighbor_color_count
+from thesis.colored_graph import ColoredGraph
 
 
 class GWLAdapted:
-    def __init__(self, colored_graph, refinement_steps: int, n_cluster: int,
+    def __init__(self, colored_graph: ColoredGraph, refinement_steps: int, n_cluster: int,
                  cluster_initialization_method: str = "kmeans++",
                  num_forgy_iterations: int = 15, seed: int = 4321) -> None:
 
         self.colored_graph = colored_graph
         self.graph = colored_graph.graph
 
-        self.h = refinement_steps
-        self.k = n_cluster
+        self.refinement_steps = refinement_steps
+        self.n_cluster = n_cluster
         self.cluster_initialization_method = cluster_initialization_method
         self.num_forgy_iterations = num_forgy_iterations
         self.seed = seed
@@ -32,9 +33,9 @@ class GWLAdapted:
         self.color_hierarchy_tree = self.colored_graph.color_hierarchy_tree
 
         # --- iterative refinement ---
-        for _ in range(self.h):
+        for _ in range(self.refinement_steps):
             self.__renep()
-            # self.update_colors()
+            self.update_colors()
 
         # Finalize
         self.__is_refined = True
@@ -60,7 +61,7 @@ class GWLAdapted:
                     neighbor_color_count[key] = full_count_vector
 
                 kmeans = KMeans(
-                    k=self.k,
+                    k=self.n_cluster,
                     initialization_method=self.cluster_initialization_method,
                     num_forgy_iterations=self.num_forgy_iterations,
                     seed=self.seed
@@ -77,10 +78,6 @@ class GWLAdapted:
                 node.update_associated_vertices(refined_nodes)
                 leaf.add_child(node)
                 self.colored_graph.next_color_id += 1
-
-        for leaf in self.color_hierarchy_tree.get_leaves():
-            for node in leaf.associated_vertices:
-                self.graph.nodes[node]["color-stack"].extend([leaf.color])
 
     def update_colors(self) -> None:
         """
@@ -99,6 +96,7 @@ class GWLAdapted:
         for leaf in self.color_hierarchy_tree.get_leaves():
             for node in leaf.associated_vertices:
                 self.graph.nodes[node]["color-stack"].extend([leaf.color])
+        self.colored_graph.color_stack_height += 1
 
     def generate_neighbor_color_count(self, vertex: int, edge_labels: dict) -> dict:
         """

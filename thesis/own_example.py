@@ -40,22 +40,27 @@ print("Number of nodes:", g.number_of_nodes())
 # feature_vector = generate_feature_vector(g)
 # print(dict(sorted(feature_vector.items())))
 
-# colored_graph_a = ColoredGraph(g)
-# qsc = QuasiStableColoringGraph(colored_graph_a, q=0)
-# qsc.refine()
+colored_graph_a = ColoredGraph(g)
+# colored_graph_a.build_color_hierarchy_tree()
+# colored_graph_a.color_hierarchy_tree.visualize_tree()
+
+qsc = QuasiStableColoringGraph(colored_graph_a, n_colors=6)
+qsc.refine()
+
+colored_graph_a.assert_consistent_color_stack_height()
+unique_colors = qsc.colored_graph.get_num_colors()
+
+print("### Quasi Stable Coloring ###")
+print(f"Number of unique colors: {unique_colors}")
+print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
+
+colored_graph_a.draw()
+colored_graph_a.build_color_hierarchy_tree()
+colored_graph_a.color_hierarchy_tree.visualize_tree()
 #
-# colored_graph_a.assert_consistent_color_stack_height()
-# unique_colors = qsc.colored_graph.get_num_colors()
-#
-# print("### Quasi Stable Coloring ###")
-# print(f"Number of unique colors: {unique_colors}")
-# print(f"Color-stack height: {qsc.colored_graph.color_stack_height}")
-#
-# colored_graph_a.draw()
-#
-# colored_graph_b = ColoredGraph(g)
-# wl = WeisfeilerLemanColoringGraph(colored_graph_b, refinement_steps=1) # 9 for stable coloring
-# wl.refine()
+colored_graph_b = ColoredGraph(g)
+wl = WeisfeilerLemanColoringGraph(colored_graph_b, refinement_steps=2) # 9 for stable coloring
+wl.refine()
 #
 # colored_graph_b.assert_consistent_color_stack_height()
 # unique_colors = wl.colored_graph.get_num_colors()
@@ -66,8 +71,8 @@ print("Number of nodes:", g.number_of_nodes())
 #
 # colored_graph_b.draw()
 #
-# colored_graph_b.build_color_hierarchy_tree()
-# colored_graph_b.color_hierarchy_tree.visualize_tree()
+colored_graph_b.build_color_hierarchy_tree()
+colored_graph_b.color_hierarchy_tree.visualize_tree()
 
 h = g.copy()
 k = g.copy()

@@ -152,28 +152,28 @@ class QuasiStableColoringGraph:
     def refine(self):
         self.partitions = []
 
-        node_labels = nx.get_node_attributes(self.graph, "label")
-        are_nodes_labeled = has_distinct_node_labels(self.graph)
-
-        self.next_color_id = 0
-
-        if are_nodes_labeled:
-            node_color_attributes = {}
-            label_color_map = {}
-
-            for node, label in node_labels.items():
-                if label in label_color_map:
-                    node_color_attributes[node] = [label_color_map[label]]
-                else:
-                    label_color_map[label] = self.next_color_id
-                    node_color_attributes[node] = [self.next_color_id]
-                    self.next_color_id += 1
-
-            nx.set_node_attributes(self.graph, node_color_attributes, "color-stack")
-
-        else:
-            nx.set_node_attributes(self.graph, {node: [self.next_color_id] for node in self.graph.nodes}, "color-stack")
-            self.next_color_id += 1
+        # node_labels = nx.get_node_attributes(self.graph, "label")
+        # are_nodes_labeled = has_distinct_node_labels(self.graph)
+        #
+        # self.next_color_id = 0
+        #
+        # if not are_nodes_labeled:
+        #     node_color_attributes = {}
+        #     label_color_map = {}
+        #
+        #     for node, label in node_labels.items():
+        #         if label in label_color_map:
+        #             node_color_attributes[node] = [label_color_map[label]]
+        #         else:
+        #             label_color_map[label] = self.next_color_id
+        #             node_color_attributes[node] = [self.next_color_id]
+        #             self.next_color_id += 1
+        #
+        #     nx.set_node_attributes(self.graph, node_color_attributes, "color-stack")
+        #
+        # else:
+        #     nx.set_node_attributes(self.graph, {node: [self.next_color_id] for node in self.graph.nodes}, "color-stack")
+        #     self.next_color_id += 1
 
         # initialize partitions by grouping nodes by their initial color
         color_groups = defaultdict(list)

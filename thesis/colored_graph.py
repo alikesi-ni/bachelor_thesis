@@ -26,7 +26,6 @@ class ColoredGraph:
             label_color_map = {}
             color_nodes_map = defaultdict(list)
 
-            root = ColorNode(0)
             self.next_color_id = 1  # Reserve 0 for the artificial root
 
             for node, label in node_labels.items():
@@ -170,7 +169,7 @@ class ColoredGraph:
         """
 
         node_map = {}  # color_id -> ColorNode
-        edge_links = set()  # (parent_color, child_color) pairs
+        edge_links = defaultdict(set)  # parent_id -> set of child_ids
         level0_colors = set()
 
         # Step 1: Create ColorNode objects and register parent → child relationships
@@ -186,16 +185,17 @@ class ColoredGraph:
                     node_map[color_id] = ColorNode(color_id)
                 if i > 0:
                     parent = color_stack[i - 1]
-                    edge_links.add((parent, color_id))
+                    edge_links[parent].add(color_id)  # build mapping
 
         # Step 2: Assign associated vertices to leaf nodes (last color in stack)
         for node, data in self.graph.nodes(data=True):
             leaf_color = data["color-stack"][-1]
             node_map[leaf_color].associated_vertices.append(node)
 
-        # Step 3: Link parent → children
-        for parent_id, child_id in edge_links:
-            node_map[parent_id].add_child(node_map[child_id])
+        # Step 3: Link parent → children in sorted order
+        for parent_id, child_ids in edge_links.items():
+            for child_id in sorted(child_ids):
+                node_map[parent_id].add_child(node_map[child_id])
 
         # Step 4: Create artificial root if necessary
         if len(level0_colors) == 1:

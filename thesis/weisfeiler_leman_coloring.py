@@ -1,7 +1,5 @@
-import networkx as nx
-
-from thesis.colored_graph import ColoredGraph
-from thesis.other_utils import has_distinct_edge_labels
+from thesis.colored_graph.colored_graph import ColoredGraph
+from thesis.utils.other_utils import has_distinct_edge_labels
 
 
 class WeisfeilerLemanColoringGraph:

@@ -2,11 +2,10 @@ import networkx as nx
 
 from GWL_python.gwl import GradualWeisfeilerLeman
 from thesis.colored_graph import ColoredGraph
-from thesis.gradual_weisfeiler_leman_coloring import GradualWeisfeilerLemanGraph
 from thesis.gwl_adapted import GWLAdapted
-from thesis.other_utils import generate_feature_vector, remove_node_labels
+from thesis.utils.other_utils import generate_feature_vector
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
-from thesis.read_data_utils import dataset_to_graphs
+from thesis.utils.read_data_utils import dataset_to_graphs
 from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoringGraph
 
 # Create an undirected graph

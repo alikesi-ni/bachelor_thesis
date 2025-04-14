@@ -1,10 +1,10 @@
 import networkx as nx
 
-from GWL_python.clustering import KMeans
+from GWL_python.clustering.kmeans import KMeans
 from GWL_python.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
 from GWL_python.color_hierarchy.color_node import ColorNode
 from GWL_python.gwl.utils import generate_neighbor_color_count
-from thesis.colored_graph import ColoredGraph
+from thesis.colored_graph.colored_graph import ColoredGraph
 
 
 class GWLAdapted:

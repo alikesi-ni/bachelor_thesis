@@ -5,7 +5,7 @@ import networkx as nx
 import matplotlib
 import matplotlib.pyplot as plt
 
-from GWL_python.color_hierarchy.color_node import ColorNode
+from .color_node import ColorNode
 
 
 class ColorHierarchyTree:

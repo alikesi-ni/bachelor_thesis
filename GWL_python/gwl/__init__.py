@@ -1,1 +1,0 @@
-from .gwl import GradualWeisfeilerLeman

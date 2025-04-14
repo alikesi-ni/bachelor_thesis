@@ -3,8 +3,7 @@ import networkx as nx
 import numpy as np
 from scipy.sparse import csr_array
 
-from thesis.colored_graph import ColoredGraph
-from thesis.other_utils import has_distinct_node_labels
+from thesis.colored_graph.colored_graph import ColoredGraph
 
 
 class ColorStats:
@@ -152,29 +151,6 @@ class QuasiStableColoringGraph:
     def refine(self):
         self.partitions = []
 
-        # node_labels = nx.get_node_attributes(self.graph, "label")
-        # are_nodes_labeled = has_distinct_node_labels(self.graph)
-        #
-        # self.next_color_id = 0
-        #
-        # if not are_nodes_labeled:
-        #     node_color_attributes = {}
-        #     label_color_map = {}
-        #
-        #     for node, label in node_labels.items():
-        #         if label in label_color_map:
-        #             node_color_attributes[node] = [label_color_map[label]]
-        #         else:
-        #             label_color_map[label] = self.next_color_id
-        #             node_color_attributes[node] = [self.next_color_id]
-        #             self.next_color_id += 1
-        #
-        #     nx.set_node_attributes(self.graph, node_color_attributes, "color-stack")
-        #
-        # else:
-        #     nx.set_node_attributes(self.graph, {node: [self.next_color_id] for node in self.graph.nodes}, "color-stack")
-        #     self.next_color_id += 1
-
         # initialize partitions by grouping nodes by their initial color
         color_groups = defaultdict(list)
         for node, color_stack in nx.get_node_attributes(self.graph, "color-stack").items():
@@ -184,7 +160,7 @@ class QuasiStableColoringGraph:
         self.partitions = list(color_groups.values())
 
         self.weights = nx.adjacency_matrix(self.graph, dtype=np.float64)
-        self.color_stats = ColorStats(len(self.graph), min(self.n_colors, 128))
+        self.color_stats = ColorStats(len(self.graph), min(self.n_colors, 256))
         self.update_stats()
 
         while len(self.partitions) < self.n_colors:

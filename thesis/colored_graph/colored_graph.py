@@ -5,8 +5,8 @@ from matplotlib import pyplot as plt
 
 from GWL_python.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
 from GWL_python.color_hierarchy.color_node import ColorNode
-from thesis.color_palette import ColorPalette
-from thesis.other_utils import has_distinct_node_labels
+from thesis.colored_graph.color_palette import ColorPalette
+from thesis.utils.other_utils import has_distinct_node_labels
 
 
 class ColoredGraph:

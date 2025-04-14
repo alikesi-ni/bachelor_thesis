@@ -1,5 +1,5 @@
 from torch_geometric.datasets import TUDataset
-from utils import *
+from thesis.utils import *
 
 dataset_names = [
     "KKI", "PTC_FM", "COLLAB", "DD", "IMDB-BINARY", "MSRC_9",

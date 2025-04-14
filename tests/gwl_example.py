@@ -1,5 +1,3 @@
-import pickle
-
 import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
@@ -7,16 +5,17 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
-from kernels.wl_subtree import WLSubtreeKernel
-from graph_dataset.graph_dataset import GraphDataset
-from gwl.gwl import GradualWeisfeilerLeman
-from thesis.colored_graph import ColoredGraph
+from GWL_python.graph_dataset.graph_dataset import GraphDataset
+from GWL_python.kernels.wl_subtree import WLSubtreeKernel
+from GWL_python.gwl.gwl import GradualWeisfeilerLeman
+from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
 from thesis.utils.read_data_utils import dataset_to_graphs
 import networkx as nx
 
-with open("./data-pickled/KKI", mode="rb") as pickled_data:
-    dataset: GraphDataset = pickle.load(pickled_data)
+
+dataset_name = "KKI"
+dataset = GraphDataset("../data", dataset_name)
 
 # retrieve graph ids and labels
 graph_id_label_mapping = dataset.get_graphs_labels()
@@ -27,7 +26,7 @@ graph_labels = np.fromiter(graph_id_label_mapping.values(), int)
 # disjoint union of all graphs of PTC_FM dataset
 graph = dataset.get_graphs_as_disjoint_union()
 
-own_graphs = dataset_to_graphs("../thesis/data", "KKI")
+own_graphs = dataset_to_graphs("../data", "KKI")
 own_disjoint_graph = nx.disjoint_union_all(own_graphs)
 
 colored_graph = ColoredGraph(own_disjoint_graph)

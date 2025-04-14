@@ -1,5 +1,4 @@
 import warnings
-import matplotlib.pyplot as plt
 
 class ColorPalette:
     # High-contrast distinct colors

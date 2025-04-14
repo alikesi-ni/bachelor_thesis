@@ -1,5 +1,5 @@
 .idea
-thesis/data
+data
 
 # Ignore Python bytecode and cache files
 __pycache__/

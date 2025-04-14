@@ -1,10 +1,13 @@
+import itertools
 from collections import defaultdict
+from typing import Dict
 
 import networkx as nx
 from matplotlib import pyplot as plt
+from scipy.sparse import csr_array, vstack
 
-from GWL_python.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
-from GWL_python.color_hierarchy.color_node import ColorNode
+from thesis.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
+from thesis.color_hierarchy.color_node import ColorNode
 from thesis.colored_graph.color_palette import ColorPalette
 from thesis.utils.other_utils import has_distinct_node_labels
 
@@ -214,3 +217,100 @@ class ColoredGraph:
         tree.node_map = {cid: cnode for cid, cnode in node_map.items()}
 
         self.color_hierarchy_tree = tree
+
+    def generate_feature_vector(self) -> Dict[int, int]:
+        """
+    Generates a color histogram feature vector for the current graph.
+
+    Returns
+    -------
+    Dict[int, int]
+        A dictionary where keys are color IDs (from the color-stack)
+        and values are their frequency counts across all nodes.
+    """
+
+        fv = dict()
+
+        for color in list(itertools.chain(*nx.get_node_attributes(self.graph, "color-stack").values())):
+
+            if color in fv.keys():
+                fv[color] += 1
+            else:
+                fv[color] = 1
+
+        return fv
+
+    def generate_gid_to_feature_vector_map(self) -> Dict[int, Dict[int, int]]:
+        """
+        Generates color histogram feature vectors for all subgraphs
+        contained within the disjoint union graph.
+
+        Assumes that each node has:
+        - a 'gid' attribute indicating which graph it belongs to
+        - a 'color-stack' attribute produced by color refinement
+
+        Returns
+        -------
+        Dict[int, Dict[int, int]]
+            A dictionary mapping each graph ID (gid) to its corresponding
+            color histogram {color_id: count}.
+        """
+
+        fvs: Dict[int, Dict[int, int]] = dict()
+
+        nodes = self.graph.nodes
+
+        for node in nodes:
+
+            gid = nodes[node]["gid"]
+            colors = nodes[node]["color-stack"]
+
+            if gid not in fvs.keys():
+                fvs[gid] = dict()
+
+            for color in colors:
+                if color in fvs[gid].keys():
+                    fvs[gid][color] += 1
+                else:
+                    fvs[gid][color] = 1
+
+        return fvs
+
+    def generate_feature_matrix(self) -> csr_array:
+        """
+        Converts the gid-to-feature-vector mapping into a sparse feature matrix.
+
+        Each row corresponds to a graph (gid), and each column corresponds to a
+        color ID. The color ID is used directly as the column index.
+
+        Assumes:
+        - Color IDs are consecutive integers starting at 0 or 1
+        - GIDs are unique integers, possibly starting at 0
+
+        Returns
+        -------
+        csr_array
+            A sparse matrix of shape [max_gid + 1 x max_color_id + 1]
+            where row i corresponds to gid = i, and column j corresponds to color ID = j.
+        """
+
+        gid_to_feature_vector_map = self.generate_gid_to_feature_vector_map()
+
+        all_gids = sorted(gid_to_feature_vector_map)
+        max_gid = max(all_gids)
+
+        max_color_id = max(color for vec in gid_to_feature_vector_map.values() for color in vec)
+
+        row_count = max_gid + 1 # sparse matrix starts with row 0
+        col_count = max_color_id + 1 # sparse matrix starts with col 0
+
+        rows = []
+
+        for gid in range(0, row_count):
+            vec = gid_to_feature_vector_map.get(gid, {})
+            indices = list(vec.keys())  # color IDs as column indices
+            values = list(vec.values())
+            row = csr_array((values, ([0] * len(indices), indices)), shape=(1, col_count))
+            rows.append(row)
+
+        return vstack(rows, format="csr")

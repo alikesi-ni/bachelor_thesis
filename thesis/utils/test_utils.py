@@ -1,29 +1,23 @@
 import csv
+import time
 
+from typing import Dict
+
+import networkx as nx
 import numpy as np
-from scipy.sparse import vstack, csr_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import cosine_similarity, linear_kernel
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 
 from thesis.colored_graph.colored_graph import ColoredGraph
-from thesis.utils.other_utils import generate_feature_vectors
 from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoringGraph
 
 
-def sparse_vector_from_dict(vec_dict: dict, dim=None) -> csr_matrix:
-    if not vec_dict:
-        return csr_matrix((1, 1))
-    indices = list(vec_dict.keys())
-    values = list(vec_dict.values())
-    if dim is None:
-        dim = max(indices) + 1
-    return csr_matrix((values, ([0]*len(indices), indices)), shape=(1, dim))
-
-def evaluate_nested_cv(disjoint_graph, graph_labels: dict, h_grid, c_grid, use_cosine=False, dataset_name="DATASET"):
-    gids = np.array(list(graph_labels.keys()))
-    y = np.array(list(graph_labels.values()))
+def evaluate_nested_cv(disjoint_graph: nx.Graph, graph_id_label_map: Dict[int, int], h_grid, c_grid, use_cosine=False, dataset_name="DATASET"):
+    sorted_graph_id_label_map = dict(sorted(graph_id_label_map.items()))
+    gids = np.array(list(sorted_graph_id_label_map.keys()))
+    y = np.array(list(sorted_graph_id_label_map.values()))
     outer_cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
 
     accuracies = []
@@ -44,14 +38,23 @@ def evaluate_nested_cv(disjoint_graph, graph_labels: dict, h_grid, c_grid, use_c
             best_params = None
 
             for h in h_grid:
-                cg = ColoredGraph(disjoint_graph.copy())
-                wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h)
+                colored_graph = ColoredGraph(disjoint_graph)
+                wl = WeisfeilerLemanColoringGraph(colored_graph, refinement_steps=h)
                 wl.refine()
 
-                fv_dict = generate_feature_vectors(cg.graph)
-                dim = max(max(d.keys(), default=0) for d in fv_dict.values()) + 1
+                # Time the dictionary-based method
+                start = time.time()
+                test = colored_graph.generate_gid_to_feature_vector_map()
+                end = time.time()
+                print(f"generate_gid_to_feature_vector_map: {end - start:.6f} seconds")
 
-                X_train = vstack([sparse_vector_from_dict(fv_dict[gid], dim=dim) for gid in outer_train_gids])
+                # Time the matrix-based method
+                start = time.time()
+                X = colored_graph.generate_feature_matrix()
+                end = time.time()
+                print(f"generate_feature_matrix: {end - start:.6f} seconds")
+
+                X_train = X[outer_train_gids]
                 y_train = y[outer_train_idx]
 
                 inner_cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
@@ -76,12 +79,11 @@ def evaluate_nested_cv(disjoint_graph, graph_labels: dict, h_grid, c_grid, use_c
 
             # Final outer test eval
             h_best, C_best = best_params
-            cg = ColoredGraph(disjoint_graph.copy())
-            wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h_best)
+            colored_graph = ColoredGraph(disjoint_graph)
+            wl = WeisfeilerLemanColoringGraph(colored_graph, refinement_steps=h_best)
             wl.refine()
-            fv_dict = generate_feature_vectors(cg.graph)
-            dim = max(max(d.keys(), default=0) for d in fv_dict.values()) + 1
-            X = vstack([sparse_vector_from_dict(fv_dict[gid], dim=dim) for gid in gids])
+
+            X = colored_graph.generate_feature_matrix()
 
             K_train = cosine_similarity(X[outer_train_idx], X[outer_train_idx]) if use_cosine else linear_kernel(X[outer_train_idx])
             K_test = cosine_similarity(X[outer_test_idx], X[outer_train_idx]) if use_cosine else linear_kernel(X[outer_test_idx], X[outer_train_idx])

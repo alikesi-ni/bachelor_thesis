@@ -3,7 +3,7 @@ from GWL_python.clustering.kmeans import KMeans
 import GWL_python.gwl.utils as gwl_utils
 
 
-class GradualWeisfeilerLemanGraph:
+class GWLColorStackGraph:
     """
     Refines a ColoredGraph using Gradual Weisfeiler-Leman refinement with k-means clustering.
     Updates only the 'color-stack' in-place.

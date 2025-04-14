@@ -1,9 +1,8 @@
 import networkx as nx
 
-from GWL_python.gwl import GradualWeisfeilerLeman
-from thesis.colored_graph import ColoredGraph
-from thesis.gwl_adapted import GWLAdapted
-from thesis.utils.other_utils import generate_feature_vector
+from GWL_python.gwl.gwl import GradualWeisfeilerLeman
+from thesis.colored_graph.colored_graph import ColoredGraph
+from thesis.gwl_coloring import GWLColoringGraph
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
 from thesis.utils.read_data_utils import dataset_to_graphs
 from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoringGraph
@@ -27,7 +26,7 @@ edges = [
 # Add edges to the graph
 g.add_edges_from(edges)
 
-g = dataset_to_graphs("./data", "PTC_FM")[1]
+g = dataset_to_graphs("../data", "PTC_FM")[1]
 g = nx.convert_node_labels_to_integers(g, first_label=0)
 
 print("Number of nodes:", g.number_of_nodes())
@@ -77,9 +76,9 @@ h = g.copy()
 k = g.copy()
 colored_graph_k = ColoredGraph(k)
 
-gwl = GradualWeisfeilerLeman(refinement_steps=3, n_cluster=2)
-original_gwl_color_hierarchy = gwl.refine_color(h)
-original_gwl_feature_vector = gwl.generate_feature_vector(h)
+original_gwl = GradualWeisfeilerLeman(refinement_steps=3, n_cluster=2)
+original_gwl_color_hierarchy = original_gwl.refine_color(h)
+original_gwl_feature_vector = original_gwl.generate_feature_vector(h)
 print(dict(sorted(original_gwl_feature_vector.items())))
 
 # new_gwl_colored_graph = ColoredGraph(g)
@@ -88,12 +87,12 @@ print(dict(sorted(original_gwl_feature_vector.items())))
 # new_gwl_feature_vector = generate_feature_vector(new_gwl.graph)
 # print(new_gwl_feature_vector)
 
-gwl_adapted = GWLAdapted(colored_graph_k, refinement_steps=3, n_cluster=2)
-gwl_adapted.refine()
-gwl_adapted_feature_vector = generate_feature_vector(colored_graph_k.graph)
-print(dict(sorted(gwl_adapted_feature_vector.items())))
+thesis_gwl = GWLColoringGraph(colored_graph_k, refinement_steps=3, n_cluster=2)
+thesis_gwl.refine()
+thesis_gwl_feature_vector = colored_graph_k.generate_feature_vector()
+print(dict(sorted(thesis_gwl_feature_vector.items())))
 
-gwl_adapted.color_hierarchy_tree.visualize_tree()
+thesis_gwl.color_hierarchy_tree.visualize_tree()
 colored_graph_k.build_color_hierarchy_tree()
 colored_graph_k.color_hierarchy_tree.visualize_tree()
 

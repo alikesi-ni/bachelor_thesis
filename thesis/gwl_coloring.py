@@ -1,13 +1,12 @@
 import networkx as nx
 
-from GWL_python.clustering.kmeans import KMeans
-from GWL_python.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
-from GWL_python.color_hierarchy.color_node import ColorNode
-from GWL_python.gwl.utils import generate_neighbor_color_count
+from thesis.clustering.kmeans import KMeans
+from thesis.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
+from thesis.color_hierarchy.color_node import ColorNode
 from thesis.colored_graph.colored_graph import ColoredGraph
 
 
-class GWLAdapted:
+class GWLColoringGraph:
     def __init__(self, colored_graph: ColoredGraph, refinement_steps: int, n_cluster: int,
                  cluster_initialization_method: str = "kmeans++",
                  num_forgy_iterations: int = 15, seed: int = 4321) -> None:
@@ -50,7 +49,7 @@ class GWLAdapted:
         for leaf in leaves:
             if len(leaf.associated_vertices) > 1:
                 neighbor_color_count = {
-                    vertex: generate_neighbor_color_count(self.graph, vertex, edge_labels)
+                    vertex: self.generate_neighbor_color_count(vertex, edge_labels)
                     for vertex in leaf.associated_vertices
                 }
 

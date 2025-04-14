@@ -1,5 +1,6 @@
 .idea
 data
+tests/*.csv
 
 # Ignore Python bytecode and cache files
 __pycache__/

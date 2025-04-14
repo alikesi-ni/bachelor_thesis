@@ -15,8 +15,8 @@ class GWLAdapted:
         self.colored_graph = colored_graph
         self.graph = colored_graph.graph
 
-        self.refinement_steps = refinement_steps
-        self.n_cluster = n_cluster
+        self.refinement_steps = refinement_steps # h in the paper
+        self.n_cluster = n_cluster # k in the paper
         self.cluster_initialization_method = cluster_initialization_method
         self.num_forgy_iterations = num_forgy_iterations
         self.seed = seed

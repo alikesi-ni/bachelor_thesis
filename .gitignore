@@ -1,6 +1,7 @@
 .idea
 data
-tests/*.csv
+tests/results/*.csv
+tests/results/*.txt
 
 # Ignore Python bytecode and cache files
 __pycache__/

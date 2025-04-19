@@ -1,4 +1,6 @@
 import csv
+import logging
+import sys
 from datetime import datetime
 import time
 
@@ -6,177 +8,258 @@ from typing import Dict
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.pairwise import cosine_similarity, linear_kernel
+from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
+from thesis.utils.other_utils import has_distinct_edge_labels, convert_to_feature_matrix, has_distinct_node_labels
 from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoringGraph
 
 
-def evaluate_wl_cv(disjoint_graph: nx.Graph, graph_id_label_map: Dict[int, int], h_grid, c_grid, dataset_name="DATASET"):
-    sorted_graph_id_label_map = dict(sorted(graph_id_label_map.items()))
-    gids = np.array(list(sorted_graph_id_label_map.keys()))
-    y = np.array(list(sorted_graph_id_label_map.values()))
-    outer_cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+def setup_logger(log_path: str) -> logging.Logger:
+    logger = logging.getLogger("test_utils")
+    logger.setLevel(logging.INFO)
+    logger.handlers.clear()
 
-    accuracies = []
+    formatter = logging.Formatter(
+        "%(asctime)s %(levelname)-5s " +
+        # "[%(threadName)s] " +
+        # "%(name)s " +
+        "- %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"  # Use .%f and truncate later if needed
+    )
 
+    file_handler = logging.FileHandler(log_path, mode="a")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler(stream=sys.stdout)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    return logger
+
+def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
+                   dataset_name="DATASET", folds=10, logging=True, repeats=1):
+    from datetime import datetime
+
+    sorted_map = dict(sorted(graph_id_label_map.items()))
+    gids = np.array(list(sorted_map.keys()))
+    y = np.array(list(sorted_map.values()))
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{timestamp}_{dataset_name}_normalized.csv"
+    refinement_method = "WL"
 
-    # Create/open file for appending
-    with open(filename, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["C", "h", "accuracy"])  # header
+    train_filename = f"{timestamp}_{dataset_name}_{refinement_method}_train.csv"
+    test_filename = f"{timestamp}_{dataset_name}_{refinement_method}_test.csv"
+    log_filename = f"{timestamp}_{dataset_name}_{refinement_method}_log.txt"
 
-        for outer_fold_idx, (outer_train_idx, outer_test_idx) in enumerate(outer_cv.split(gids, y), 1):
-            outer_train_gids = gids[outer_train_idx]
-            outer_test_gids = gids[outer_test_idx]
+    logger = setup_logger(log_filename) if logging else None
 
-            best_score = -1
-            best_params = None
+    def log(msg):
+        if logging:
+            logger.info(msg)
+        else:
+            print(msg)
 
-            for h in h_grid:
-                colored_graph = ColoredGraph(disjoint_graph)
-                wl = WeisfeilerLemanColoringGraph(colored_graph, refinement_steps=h)
-                wl.refine()
+    with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
+        writer_train = csv.writer(f_train)
+        writer_test = csv.writer(f_test)
+        writer_train.writerow(["i", "fold", "C", "h", "accuracy"])
+        writer_test.writerow(["i", "fold", "C", "h", "accuracy"])
 
-                # Time the dictionary-based method
-                start = time.time()
-                test = colored_graph.generate_gid_to_feature_vector_map()
-                end = time.time()
-                print(f"generate_gid_to_feature_vector_map: {end - start:.6f} seconds")
+        for i in range(1, repeats + 1):
+            outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=i)
+            log(f"[i={i}] Dataset: {dataset_name}")
+            for fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
+                best_score = -1
+                best_params = None
 
-                # Time the matrix-based method
-                start = time.time()
-                X = colored_graph.generate_feature_matrix()
-                end = time.time()
-                print(f"generate_feature_matrix: {end - start:.6f} seconds")
-
-                X_train = X[outer_train_gids]
-                y_train = y[outer_train_idx]
-
-                inner_cv = StratifiedKFold(n_splits=10, shuffle=True, random_state=0)
-                for C in c_grid:
-                    inner_scores = []
-                    for train_idx, val_idx in inner_cv.split(X_train, y_train):
-                        K_train = cosine_similarity(X_train[train_idx], X_train[train_idx])
-                        K_val = cosine_similarity(X_train[val_idx], X_train[train_idx])
-                        clf = SVC(kernel="precomputed", C=C)
-                        clf.fit(K_train, y_train[train_idx])
-                        preds = clf.predict(K_val)
-                        inner_scores.append(accuracy_score(y_train[val_idx], preds))
-
-                    avg_score = np.mean(inner_scores)
-                    writer.writerow([C, h, avg_score])        # Write immediately
-                    f.flush()                                # Ensure write is not buffered
-                    print(f"[Outer Fold {outer_fold_idx}] C={C}, h={h}, Accuracy={avg_score:.4f}")
-
-                    if avg_score > best_score:
-                        best_score = avg_score
-                        best_params = (h, C)
-
-            # Final outer test eval
-            h_best, C_best = best_params
-            colored_graph = ColoredGraph(disjoint_graph)
-            wl = WeisfeilerLemanColoringGraph(colored_graph, refinement_steps=h_best)
-            wl.refine()
-
-            X = colored_graph.generate_feature_matrix()
-
-            K_train = cosine_similarity(X[outer_train_idx], X[outer_train_idx])
-            K_test = cosine_similarity(X[outer_test_idx], X[outer_train_idx])
-
-            clf = SVC(kernel="precomputed", C=C_best)
-            clf.fit(K_train, y[outer_train_idx])
-            preds = clf.predict(K_test)
-            acc = accuracy_score(y[outer_test_idx], preds)
-            accuracies.append(acc)
-
-            print(f"[Outer Fold {outer_fold_idx}] BEST C={C_best}, h={h_best} → Test Accuracy: {acc:.4f}")
-            print("-" * 60)
-
-    return np.mean(accuracies), np.std(accuracies)
-
-
-def evaluate_quasistable_cv(disjoint_graph: nx.Graph, graph_id_label_map: dict[int, int],
-                             q_grid, n_grid, c_grid, dataset_name="DATASET"):
-    sorted_graph_id_label_map = dict(sorted(graph_id_label_map.items()))
-    gids = np.array(list(sorted_graph_id_label_map.keys()))
-    y = np.array(list(sorted_graph_id_label_map.values()))
-    outer_cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=42)
-
-    accuracies = []
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{timestamp}_{dataset_name}_normalized.csv"
-
-    with open(filename, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["C", "q", "n", "accuracy"])
-
-        for outer_fold_idx, (outer_train_idx, outer_test_idx) in enumerate(outer_cv.split(gids, y), 1):
-            outer_train_gids = gids[outer_train_idx]
-            outer_test_gids = gids[outer_test_idx]
-
-            best_score = -1
-            best_params = None
-
-            for q in q_grid:
-                for n in n_grid:
-                    colored_graph = ColoredGraph(disjoint_graph.copy())
-                    qsc = QuasiStableColoringGraph(colored_graph, q=q, n_colors=n)
-                    qsc.refine()
-
-                    # Time the matrix-based method
+                for h in h_grid:
+                    cg = ColoredGraph(disjoint_graph.copy())
                     start = time.time()
-                    X = colored_graph.generate_feature_matrix()
+                    wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h)
+                    wl.refine()
                     end = time.time()
-                    print(f"[q={q}, n={n}] generate_feature_matrix: {end - start:.6f} seconds")
+                    log(f"[i={i} fold={fold}] h={h} WL time: {end - start:.4f}s")
 
-                    X_train = X[outer_train_idx]
-                    y_train = y[outer_train_idx]
+                    start = time.time()
+                    X = cg.generate_feature_matrix()
+                    end = time.time()
+                    log(f"[i={i} fold={fold}] X.shape={X.shape} generated in {end - start:.4f}s")
 
-                    inner_cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=0)
+                    X_train = X[train_idx]
+                    y_train = y[train_idx]
+
+                    inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=0)
                     for C in c_grid:
                         inner_scores = []
-                        for train_idx, val_idx in inner_cv.split(X_train, y_train):
-                            K_train = cosine_similarity(X_train[train_idx], X_train[train_idx])
-                            K_val = cosine_similarity(X_train[val_idx], X_train[train_idx])
+                        for ti, vi in inner_cv.split(X_train, y_train):
+                            K_train = cosine_similarity(X_train[ti], X_train[ti])
+                            K_val = cosine_similarity(X_train[vi], X_train[ti])
                             clf = SVC(kernel="precomputed", C=C)
-                            clf.fit(K_train, y_train[train_idx])
+                            clf.fit(K_train, y_train[ti])
                             preds = clf.predict(K_val)
-                            inner_scores.append(accuracy_score(y_train[val_idx], preds))
+                            inner_scores.append(accuracy_score(y_train[vi], preds))
 
                         avg_score = np.mean(inner_scores)
-                        writer.writerow([C, q, n, avg_score])
-                        f.flush()
-                        print(f"[Outer Fold {outer_fold_idx}] C={C}, q={q}, n={n}, Accuracy={avg_score:.4f}")
-
+                        writer_train.writerow([i, fold, C, h, avg_score])
+                        f_train.flush()
+                        log(f"[i={i} fold={fold}] C={C} h={h} Accuracy={avg_score:.4f}")
                         if avg_score > best_score:
                             best_score = avg_score
-                            best_params = (q, n, C)
+                            best_params = (h, C)
 
-            # Final outer test eval
-            q_best, n_best, C_best = best_params
-            colored_graph = ColoredGraph(disjoint_graph.copy())
-            qsc = QuasiStableColoringGraph(colored_graph, q=q_best, n_colors=n_best)
-            qsc.refine()
-            X = colored_graph.generate_feature_matrix()
+                h_best, C_best = best_params
+                cg = ColoredGraph(disjoint_graph.copy())
+                wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h_best)
+                wl.refine()
+                X = cg.generate_feature_matrix()
 
-            K_train = cosine_similarity(X[outer_train_idx], X[outer_train_idx])
-            K_test = cosine_similarity(X[outer_test_idx], X[outer_train_idx])
+                K_train = cosine_similarity(X[train_idx], X[train_idx])
+                K_test = cosine_similarity(X[test_idx], X[train_idx])
+                clf = SVC(kernel="precomputed", C=C_best)
+                clf.fit(K_train, y[train_idx])
+                preds = clf.predict(K_test)
+                acc = accuracy_score(y[test_idx], preds)
+                writer_test.writerow([i, fold, C_best, h_best, acc])
+                f_test.flush()
+                log(f"[i={i} fold={fold}] BEST C={C_best}, h={h_best} → Test Acc: {acc:.4f}")
 
-            clf = SVC(kernel="precomputed", C=C_best)
-            clf.fit(K_train, y[outer_train_idx])
-            preds = clf.predict(K_test)
-            acc = accuracy_score(y[outer_test_idx], preds)
-            accuracies.append(acc)
 
-            print(f"[Outer Fold {outer_fold_idx}] BEST C={C_best}, q={q_best}, n={n_best} → Test Accuracy: {acc:.4f}")
-            print("-" * 60)
 
-    return np.mean(accuracies), np.std(accuracies)
+def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
+                             q_grid, n_grid, c_grid, dataset_name="DATASET", folds=10, logging=True, repeats=10):
+    sorted_map = dict(sorted(graph_id_label_map.items()))
+    gids = np.array(list(sorted_map.keys()))
+    y = np.array(list(sorted_map.values()))
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    refinement_method = "QSC"
+
+    train_filename = f"{timestamp}_{dataset_name}_{refinement_method}_train.csv"
+    test_filename = f"{timestamp}_{dataset_name}_{refinement_method}_test.csv"
+    log_filename = f"{timestamp}_{dataset_name}_{refinement_method}_log.txt"
+
+    logger = setup_logger(log_filename) if logging else None
+
+    def log(msg):
+        if logging:
+            logger.info(msg)
+        else:
+            print(msg)
+
+    has_edges = has_distinct_edge_labels(disjoint_graph)
+    has_nodes = has_distinct_node_labels(disjoint_graph)
+
+    with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
+        writer_train = csv.writer(f_train)
+        writer_test = csv.writer(f_test)
+        writer_train.writerow(["i", "fold", "C", "q", "n", "accuracy"])
+        writer_test.writerow(["i", "fold", "C", "q", "n", "accuracy"])
+
+        for i in range(1, repeats + 1):
+            outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=i)
+            log(f"[i={i}] Dataset: {dataset_name}")
+
+            for fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
+                best_score = -1
+                best_params = None
+
+                for q in q_grid:
+                    for n in n_grid:
+                        cg = ColoredGraph(disjoint_graph.copy())
+
+                        if has_edges:
+                            wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=1)
+                            wl.refine()
+
+                        start = time.time()
+                        qsc = QuasiStableColoringGraph(cg, q=q, n_colors=n)
+                        qsc.refine()
+                        X = cg.generate_feature_matrix()
+                        end = time.time()
+
+                        log(f"[i={i} fold={fold}] q={q}, n={n} → shape={X.shape}, time={end - start:.4f}s")
+
+                        X_train = X[train_idx]
+                        y_train = y[train_idx]
+
+                        inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=0)
+                        for C in c_grid:
+                            inner_scores = []
+                            for ti, vi in inner_cv.split(X_train, y_train):
+                                K_train = cosine_similarity(X_train[ti], X_train[ti])
+                                K_val = cosine_similarity(X_train[vi], X_train[ti])
+                                clf = SVC(kernel="precomputed", C=C)
+                                clf.fit(K_train, y_train[ti])
+                                preds = clf.predict(K_val)
+                                inner_scores.append(accuracy_score(y_train[vi], preds))
+
+                            avg_score = np.mean(inner_scores)
+                            writer_train.writerow([i, fold, C, q, n, avg_score])
+                            f_train.flush()
+                            log(f"[i={i} fold={fold}] C={C} q={q} n={n} Accuracy={avg_score:.4f}")
+
+                            if avg_score > best_score:
+                                best_score = avg_score
+                                best_params = (q, n, C)
+
+                q_best, n_best, C_best = best_params
+                cg = ColoredGraph(disjoint_graph.copy())
+                if has_edges:
+                    wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=1)
+                    wl.refine()
+                qsc = QuasiStableColoringGraph(cg, q=q_best, n_colors=n_best)
+                qsc.refine()
+                X = cg.generate_feature_matrix()
+
+                K_train = cosine_similarity(X[train_idx], X[train_idx])
+                K_test = cosine_similarity(X[test_idx], X[train_idx])
+                clf = SVC(kernel="precomputed", C=C_best)
+                clf.fit(K_train, y[train_idx])
+                preds = clf.predict(K_test)
+                acc = accuracy_score(y[test_idx], preds)
+                writer_test.writerow([i, fold, C_best, q_best, n_best, acc])
+                f_test.flush()
+                log(f"[i={i} fold={fold}] BEST C={C_best} q={q_best} n={n_best} → Test Acc: {acc:.4f}")
+
+def summarize_repeat_results(test_filename: str, per_repeat: bool = True):
+    """
+    Summarizes repeated k-fold cross-validation results from a test CSV.
+
+    Args:
+        test_filename (str): Path to the CSV file generated by evaluate_wl_cv or evaluate_quasistable_cv.
+        per_repeat (bool): Whether to print per-repeat means.
+
+    Returns:
+        tuple: (overall_mean, overall_std)
+    """
+    df = pd.read_csv(test_filename)
+
+    if "i" not in df.columns or "accuracy" not in df.columns:
+        raise ValueError("CSV must contain columns: 'i' and 'accuracy'.")
+
+    if per_repeat:
+        print("\nMean accuracy per repeat:")
+        repeat_means = df.groupby("i")["accuracy"].mean()
+        print(repeat_means.to_string())
+
+    all_accuracies = df["accuracy"]
+    overall_mean = all_accuracies.mean()
+    overall_std = all_accuracies.std()
+
+    print(f"\nOverall mean accuracy: {overall_mean:.4f}")
+    print(f"Overall std deviation: {overall_std:.4f}")
+
+    repeat_means = df.groupby("i")["accuracy"].mean()
+    overall_mean = repeat_means.mean()
+    overall_std = repeat_means.std()
+
+    print(repeat_means)
+    print(f"\nMean accuracy across repeats: {overall_mean:.4f}")
+    print(f"Standard deviation across repeats: {overall_std:.4f}")
+
+    return overall_mean, overall_std

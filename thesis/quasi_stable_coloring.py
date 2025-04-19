@@ -148,7 +148,7 @@ class QuasiStableColoringGraph:
 
         self.colored_graph.color_stack_height += 1
 
-    def refine(self):
+    def refine(self, verbose=False):
         self.partitions = []
 
         # initialize partitions by grouping nodes by their initial color
@@ -160,18 +160,26 @@ class QuasiStableColoringGraph:
         self.partitions = list(color_groups.values())
 
         self.weights = nx.adjacency_matrix(self.graph, dtype=np.float64)
-        self.color_stats = ColorStats(len(self.graph), min(self.n_colors, 256))
+        self.color_stats = ColorStats(len(self.graph), max(len(self.partitions), int(min(self.n_colors, 128))))
         self.update_stats()
 
+        q_error_before = np.inf
         while len(self.partitions) < self.n_colors:
             if len(self.partitions) == self.color_stats.n:
+                print(f"Limit of {self.color_stats.n} reached: Updated color stats size")
                 self.color_stats = self.color_stats.resize(self.color_stats.v, self.color_stats.n * 2)
 
             witness_i, witness_j, split_deg, q_error = self.pick_witness()
+            if q_error > q_error_before:
+                print(f"Q-error JUMPED! {q_error_before:.3f} → {q_error:.3f}")
+            q_error_before = q_error
             if q_error <= self.q:
                 break
 
             self.split_color(witness_i, witness_j, split_deg)
             self.update_stats_split(witness_i, len(self.partitions) - 1)
+            verbose and print(f"Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
+
+        print(f"QSC DONE: color count: {len(self.partitions)}, max q-error={q_error}")
 
         return self.partitions

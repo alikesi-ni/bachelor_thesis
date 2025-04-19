@@ -12,10 +12,9 @@ disjoint_graph = nx.disjoint_union_all(graphs)
 graph_id_label_map = {g.graph["graph_id"]: g.graph["graph_label"] for g in graphs}
 
 q_grid = list(range(1, 6))  # q ∈ {1, 2, 3, 4, 5}
-n_grid = [2**i for i in range(5, 9)] + [np.inf] # n ∈ {8, 16, 32, 64, 128, np.inf}
+n_grid = [2**i for i in range(9, 12)] + [np.inf]  # n ∈ {8, 16, 32, 64, 128, np.inf}
 c_grid = [10**i for i in range(-3, 4)]  # SVM C ∈ {1e-3 to 1e3}
 
 mean_acc, std_acc = evaluate_quasistable_cv(
-    disjoint_graph, graph_id_label_map, q_grid, n_grid, c_grid, dataset_name="PTC_FM"
+    disjoint_graph, graph_id_label_map, q_grid, n_grid, c_grid, k_fold=4, dataset_name="PTC_FM"
 )
-print(f"[Linear] Accuracy: {mean_acc:.4f} ± {std_acc:.4f}")

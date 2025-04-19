@@ -9,7 +9,7 @@ from scipy.sparse import csr_array, vstack
 from thesis.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
 from thesis.color_hierarchy.color_node import ColorNode
 from thesis.colored_graph.color_palette import ColorPalette
-from thesis.utils.other_utils import has_distinct_node_labels
+from thesis.utils.other_utils import has_distinct_node_labels, convert_to_feature_matrix
 
 
 class ColoredGraph:
@@ -296,21 +296,4 @@ class ColoredGraph:
 
         gid_to_feature_vector_map = self.generate_gid_to_feature_vector_map()
 
-        all_gids = sorted(gid_to_feature_vector_map)
-        max_gid = max(all_gids)
-
-        max_color_id = max(color for vec in gid_to_feature_vector_map.values() for color in vec)
-
-        row_count = max_gid + 1 # sparse matrix starts with row 0
-        col_count = max_color_id + 1 # sparse matrix starts with col 0
-
-        rows = []
-
-        for gid in range(0, row_count):
-            vec = gid_to_feature_vector_map.get(gid, {})
-            indices = list(vec.keys())  # color IDs as column indices
-            values = list(vec.values())
-            row = csr_array((values, ([0] * len(indices), indices)), shape=(1, col_count))
-            rows.append(row)
-
-        return vstack(rows, format="csr")
+        return convert_to_feature_matrix(gid_to_feature_vector_map)

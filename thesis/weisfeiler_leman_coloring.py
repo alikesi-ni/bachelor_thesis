@@ -1,3 +1,5 @@
+import networkx as nx
+
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.utils.other_utils import has_distinct_edge_labels
 
@@ -8,7 +10,7 @@ class WeisfeilerLemanColoringGraph:
         self.graph = colored_graph.graph
         self.refinement_steps = refinement_steps
 
-    def refine(self):
+    def refine(self, verbose=False):
         are_edges_labeled = has_distinct_edge_labels(self.graph)
         for i in range(self.refinement_steps):
             color_hashes = {}
@@ -18,11 +20,12 @@ class WeisfeilerLemanColoringGraph:
                 own_color = str(self.graph.nodes[node]["color-stack"][-1])
 
                 if are_edges_labeled:
+                    edge_to_label_map = nx.get_edge_attributes(self.graph, "label")
                     neighbor_hashes = []
                     for neighbor in self.graph.neighbors(node):
-                        edge = (node, neighbor) if (node, neighbor) in self.edge_labels else (neighbor, node)
+                        edge = (node, neighbor) if (node, neighbor) in edge_to_label_map.keys() else (neighbor, node)
                         neighbor_color = str(self.graph.nodes[neighbor]["color-stack"][-1])
-                        edge_label = str(self.edge_labels[edge])
+                        edge_label = str(edge_to_label_map[edge])
                         neighbor_hashes.append(neighbor_color + edge_label)
                 else:
                     neighbor_hashes = [str(self.graph.nodes[neighbor]["color-stack"][-1])
@@ -39,6 +42,8 @@ class WeisfeilerLemanColoringGraph:
             for node in self.graph.nodes:
                 new_color = color_map[color_hashes[node]]
                 self.graph.nodes[node]["color-stack"].append(new_color)
+
+            verbose and print(f"Number of colors after iteration {i+1}: {len(color_map)}")
 
             # Update state in ColoredGraph
             self.colored_graph.color_stack_height += 1

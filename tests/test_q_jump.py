@@ -39,26 +39,34 @@ def build_qerror_jump_complex():
     ])
 
     # Cluster 2: A 5-node clique (more tightly connected)
-    for i in range(5, 10):
-        for j in range(i + 1, 10):
-            G.add_edge(i, j)
+    # for i in range(5, 10):
+    #     for j in range(i + 1, 10):
+    #         G.add_edge(i, j)
 
     # Bridge nodes between cluster 1 and 2
-    G.add_edge(0, 10)
-    G.add_edge(5, 10)
+    G.add_edge(0, 6)
+    G.add_edge(5, 6)
 
-    G.add_edge(2, 11)
-    G.add_edge(8, 11)
+    G.add_edge(2, 7)
+    G.add_edge(5, 7)
 
     # Symmetric "whiskers" on bridge nodes
     G.add_edges_from([
-        (10, 12), (10, 13),
-        (11, 14), (11, 15)
+        (6, 8), (6, 9),
+        (7, 10), (7, 11)
     ])
 
     return G
 
-g = build_qerror_jump_complex()
-cg = ColoredGraph(g)
-qsc = QuasiStableColoringGraph(cg, q=0.0, n_colors=30)
-qsc.refine()
+G = nx.Graph()
+G.add_edges_from([
+    (0, 1), (1, 2), (2, 3), (2, 4), (1, 5), (2, 5)
+])
+G=build_qerror_jump_complex()
+cg = ColoredGraph(G)
+qsc = QuasiStableColoringGraph(cg, q=0.0, n_colors=30, verbose=True)
+qsc.refine(verbose=True)
+
+color_stack_height = cg.color_stack_height
+for i in range (color_stack_height):
+    cg.draw(i)

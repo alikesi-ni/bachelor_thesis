@@ -66,3 +66,40 @@ def convert_to_feature_matrix(gid_to_feature_vector_map: Dict[int, Dict[int, int
         rows.append(row)
 
     return vstack(rows, format="csr")
+
+def analyze(graphs):
+    """
+    Analyze a list of NetworkX graphs by printing basic statistics.
+    """
+    num_graphs = len(graphs)
+    num_nodes = sum(len(g.nodes) for g in graphs)
+    num_edges = sum(len(g.edges) for g in graphs)
+
+    avg_nodes = num_nodes / num_graphs if num_graphs > 0 else 0
+    avg_edges = num_edges / num_graphs if num_graphs > 0 else 0
+
+    # Aggregate node, edge, and graph labels
+    node_labels = set()
+    edge_labels = set()
+    graph_labels = set()
+
+    for g in graphs:
+        graph_labels.add(g.graph.get("graph_label"))
+
+        for _, attrs in g.nodes(data=True):
+            if "label" in attrs:
+                node_labels.add(attrs["label"])
+
+        for _, _, attrs in g.edges(data=True):
+            if "label" in attrs:
+                edge_labels.add(attrs["label"])
+
+    print(f"Number of graphs: {num_graphs}")
+    print(f"Total nodes: {num_nodes}")
+    print(f"Total edges: {num_edges}")
+    print(f"Average nodes per graph: {avg_nodes:.2f}")
+    print(f"Average edges per graph: {avg_edges:.2f}")
+    print(f"Number of unique graph labels: {len(graph_labels)}")
+    print(f"Number of unique node labels: {len(node_labels)}")
+    print(f"Number of unique edge labels: {len(edge_labels)}")
+    print("-" * 50)

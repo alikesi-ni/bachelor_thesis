@@ -1,9 +1,11 @@
+import logging
 from collections import defaultdict
 import networkx as nx
 import numpy as np
 from scipy.sparse import csr_array
 
 from thesis.colored_graph.colored_graph import ColoredGraph
+from thesis.utils.logger_config import setup_logger
 
 
 class ColorStats:
@@ -38,6 +40,8 @@ class QuasiStableColoringGraph:
         self.partitions = []
         self.color_stats = None
         self.weights = None
+
+        self.logger = setup_logger(self.__class__.__name__) if logging else None
 
         self.__assert_nodes_start_from_zero()
 
@@ -164,22 +168,24 @@ class QuasiStableColoringGraph:
         self.update_stats()
 
         q_error_before = np.inf
+        q_error = None
         while len(self.partitions) < self.n_colors:
             if len(self.partitions) == self.color_stats.n:
-                print(f"Limit of {self.color_stats.n} reached: Updated color stats size")
+                # self.logger.info(f"Limit of {self.color_stats.n} reached: Updated color stats size")
                 self.color_stats = self.color_stats.resize(self.color_stats.v, self.color_stats.n * 2)
 
             witness_i, witness_j, split_deg, q_error = self.pick_witness()
             if q_error > q_error_before:
-                print(f"Q-error JUMPED! {q_error_before:.3f} → {q_error:.3f}")
+                self.logger.info(f"Q-error JUMPED! {q_error_before:.3f} # {q_error:.3f}")
             q_error_before = q_error
             if q_error <= self.q:
                 break
 
             self.split_color(witness_i, witness_j, split_deg)
             self.update_stats_split(witness_i, len(self.partitions) - 1)
-            verbose and print(f"Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
+            if (len(self.partitions) % 10 == 0):
+                self.logger.info(f"Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
 
-        print(f"QSC DONE: color count: {len(self.partitions)}, max q-error={q_error}")
+        self.logger.info(f"QSC DONE: color count: {len(self.partitions)}, max q-error={q_error}")
 
         return self.partitions

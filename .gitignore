@@ -1,5 +1,6 @@
 .idea
 data
+plots
 tests/results/*.csv
 tests/results/*.txt
 

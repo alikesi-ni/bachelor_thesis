@@ -6,12 +6,14 @@ from thesis.utils.read_data_utils import dataset_to_graphs
 from thesis.utils.test_utils import evaluate_quasistable_cv, evaluate_wl_cv
 
 dataset_names = [
+"ENZYMES"
+    # "MSRC_9_DIFF_SRC"
     #"IMDB-BINARY",
-    "REDDIT-BINARY",
-    "EGO-2",
-    "EGO-3",
-    "DD",
-    "EGO-4"
+    # "REDDIT-BINARY",
+    # "EGO-2",
+    # "EGO-3",
+    # "DD",
+    # "EGO-4"
 ]
 
 for dataset_name in dataset_names:
@@ -33,13 +35,14 @@ for dataset_name in dataset_names:
 
     q_grid = [2**i for i in range(6, 2, -1)]
     n_grid = [np.inf]
+    n_max = 256
     # q_grid = [4, 3, 2, 1]
     # n_grid = [2**i for i in range(8, 10)]
 
     c_grid = [10**i for i in range(-3, 4)]  # SVM C ∈ {1e-3 to 1e3}
 
     evaluate_wl_cv(
-        disjoint_graph, graph_id_label_map, h_grid, c_grid, folds=10, dataset_name=dataset_name, repeats=10
+        disjoint_graph, graph_id_label_map, h_grid, c_grid, folds=10, dataset_name=dataset_name, repeats=1
     )
 
     # evaluate_quasistable_cv(

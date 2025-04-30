@@ -10,12 +10,23 @@ class ColorPalette:
     ]
 
     @staticmethod
-    def assign_color_map(color_counts):
+    def map_color_id_to_hex_color_by_frequency(color_counts: {}):
         sorted_colors = sorted(color_counts.items(), key=lambda x: -x[1])
         color_map = {}
         for i, (color_id, _) in enumerate(sorted_colors):
             if i < len(ColorPalette.COLORS):
                 color_map[color_id] = ColorPalette.COLORS[i]
+            else:
+                warnings.warn(f"Ran out of colors! Assigning numeric labels for remaining colors.")
+                color_map[color_id] = None  # fallback: no color
+        return color_map
+
+    @staticmethod
+    def map_color_id_to_hex_color_consecutively(color_ids: []):
+        color_map = {}
+        for color_id in color_ids:
+            if color_id < len(ColorPalette.COLORS):
+                color_map[color_id] = ColorPalette.COLORS[color_id]
             else:
                 warnings.warn(f"Ran out of colors! Assigning numeric labels for remaining colors.")
                 color_map[color_id] = None  # fallback: no color

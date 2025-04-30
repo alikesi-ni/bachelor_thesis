@@ -50,7 +50,7 @@ class ColoredGraph:
 
         self.color_stack_height = 1
 
-    def draw(self, hierarchy_level: int = -1, node_size=100):
+    def draw(self, hierarchy_level: int = -1, node_size=500, show_color_id=True, show_node_id=True, true_coloring=False):
         """
         Draws the graph with nodes colored based on a given hierarchy level of their color-stack.
         If no level is provided, the last color is used.
@@ -59,10 +59,12 @@ class ColoredGraph:
         ----------
         hierarchy_level : int
             The level (index) of the color-stack to visualize. Default is the final level (-1).
-        with_labels : bool
-            Whether to show labels for nodes.
         node_size : int
             Size of the nodes in the plot.
+        show_color_id : bool
+            Whether to show the color id of each node.
+        show_node_id : bool
+            Whether to show the node id.
         """
         if self.color_stack_height == 0:
             raise ValueError("Color stack is not initialized. Has the graph been colored yet?")
@@ -75,47 +77,51 @@ class ColoredGraph:
         if not (0 <= level < self.color_stack_height):
             raise ValueError(f"Invalid hierarchy_level {level}. Must be between 0 and {self.color_stack_height - 1}.")
 
-        # Extract colors at the selected level
-        node_colors = {node: data["color-stack"][level] for node, data in self.graph.nodes(data=True)}
+        node_color_id_map = {node: data["color-stack"][level] for node, data in self.graph.nodes(data=True)}
 
-        # Count frequency of each color
-        color_counts = {}
-        for color in node_colors.values():
-            color_counts[color] = color_counts.get(color, 0) + 1
+        if true_coloring:
+            unique_colors = set()
+            for _, data in self.graph.nodes(data=True):
+                for color_id in data["color-stack"][:level + 1]:
+                    unique_colors.add(color_id)
 
-        print(f"Number of different colors at level {level}: {len(color_counts)}")
+            unique_colors = sorted(unique_colors)
+            color_map = ColorPalette.map_color_id_to_hex_color_consecutively(unique_colors)
+        else:
+            color_counts = {}
+            for color in node_color_id_map.values():
+                color_counts[color] = color_counts.get(color, 0) + 1
 
-        # Assign display colors
-        color_map = ColorPalette.assign_color_map(color_counts)
+            print(f"Number of different colors at level {level}: {len(color_counts)}")
 
-        # Build node color list
+            color_map = ColorPalette.map_color_id_to_hex_color_by_frequency(color_counts)
+
+        # Build node color list and labels
         node_color_list = []
         node_labels = {}
-        overflow_label_map = {}
-        label_index = sum(1 for v in color_map.values() if v is not None) + 1
 
-        for node, color_id in node_colors.items():
+        for node, color_id in node_color_id_map.items():
             hex_color = color_map.get(color_id)
-
             if hex_color:
                 node_color_list.append(hex_color)
-                # no label for colored nodes
             else:
-                node_color_list.append("#cccccc")
+                node_color_list.append("#cccccc")  # fallback
 
-                if color_id not in overflow_label_map:
-                    overflow_label_map[color_id] = f"[{label_index}]"
-                    label_index += 1
-
-                node_labels[node] = overflow_label_map[color_id]
+            label_parts = []
+            if show_node_id:
+                label_parts.append(str(node))
+            if show_color_id:
+                label_parts.append(f"[{color_id}]")
+            if label_parts:
+                node_labels[node] = " ".join(label_parts)
 
         # Plot layout
         pos = nx.spring_layout(self.graph, seed=42)
+        with_labels = show_node_id or show_color_id
         nx.draw(self.graph, pos, node_color=node_color_list, with_labels=False, node_size=node_size)
 
-        # Show labels only for overflow nodes
-        if node_labels:
-            nx.draw_networkx_labels(self.graph, pos, labels=node_labels, font_size=10, font_color="black")
+        if with_labels:
+            nx.draw_networkx_labels(self.graph, pos, labels=node_labels, font_size=20, font_color="black")
 
         plt.title(f"Colored Graph at Hierarchy Level {level}")
         plt.show()
@@ -175,7 +181,7 @@ class ColoredGraph:
         edge_links = defaultdict(set)  # parent_id -> set of child_ids
         level0_colors = set()
 
-        # Step 1: Create ColorNode objects and register parent → child relationships
+        # Step 1: Create ColorNode objects and register parent # child relationships
         for node, data in self.graph.nodes(data=True):
             color_stack = data["color-stack"]
             if len(color_stack) < 1:
@@ -195,7 +201,7 @@ class ColoredGraph:
             leaf_color = data["color-stack"][-1]
             node_map[leaf_color].associated_vertices.append(node)
 
-        # Step 3: Link parent → children in sorted order
+        # Step 3: Link parent # children in sorted order
         for parent_id, child_ids in edge_links.items():
             for child_id in sorted(child_ids):
                 node_map[parent_id].add_child(node_map[child_id])
@@ -297,3 +303,28 @@ class ColoredGraph:
         gid_to_feature_vector_map = self.generate_gid_to_feature_vector_map()
 
         return convert_to_feature_matrix(gid_to_feature_vector_map)
+
+    def copy(self):
+        """
+        Creates a deep copy of the ColoredGraph, including node attributes and color stack state.
+
+        Returns
+        -------
+        ColoredGraph
+            A new instance of ColoredGraph with identical graph structure and coloring.
+        """
+        new_graph = self.graph.copy()
+        new_colored_graph = ColoredGraph(new_graph)
+
+        # Manually copy additional attributes
+        new_colored_graph.next_color_id = self.next_color_id
+        new_colored_graph.color_stack_height = self.color_stack_height
+
+        # Copy color-stack explicitly (deep copy of lists)
+        for node in self.graph.nodes:
+            color_stack = self.graph.nodes[node].get("color-stack", []).copy()
+            new_colored_graph.graph.nodes[node]["color-stack"] = color_stack
+
+        new_colored_graph.color_hierarchy_tree = None
+
+        return new_colored_graph

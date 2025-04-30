@@ -28,7 +28,7 @@ class ColorStats:
 
 
 class QuasiStableColoringGraph:
-    def __init__(self, colored_graph: ColoredGraph, q=0.0, n_colors=np.inf, weighting=False):
+    def __init__(self, colored_graph: ColoredGraph, q=0.0, n_colors=np.inf, weighting=False, verbose=False):
         self.colored_graph = colored_graph
         self.graph = colored_graph.graph
         self.q = q
@@ -38,6 +38,7 @@ class QuasiStableColoringGraph:
         self.partitions = []
         self.color_stats = None
         self.weights = None
+        self.verbose = verbose
 
         self.__assert_nodes_start_from_zero()
 
@@ -89,6 +90,10 @@ class QuasiStableColoringGraph:
         witness = np.unravel_index(np.argmax(errors), errors.shape)
         q_error = errors[witness]
         witness_i, witness_j = witness[0], witness[1]
+        if (self.verbose):
+            print(f"Witness i: {self.partitions[witness_i]}")
+            print(f"Witness j: {self.partitions[witness_j]}")
+            print(f"Q-error: {q_error}")
         split_deg = np.mean(self.color_stats.neighbor[self.partitions[witness_i], witness_j].toarray())
         return witness_i, witness_j, split_deg, q_error
 
@@ -101,6 +106,9 @@ class QuasiStableColoringGraph:
                 retained.append(node_id)
 
         assert retained and ejected
+
+        if self.verbose:
+            print(f"{self.partitions[witness_i]} split into {retained} and {ejected}")
 
         self.partitions[witness_i] = retained
         self.partitions.append(ejected)
@@ -159,7 +167,7 @@ class QuasiStableColoringGraph:
 
         self.partitions = list(color_groups.values())
 
-        self.weights = nx.adjacency_matrix(self.graph, dtype=np.float64)
+        self.weights = nx.adjacency_matrix(self.graph, nodelist=sorted(self.graph.nodes), dtype=np.float64)
         self.color_stats = ColorStats(len(self.graph), max(len(self.partitions), int(min(self.n_colors, 128))))
         self.update_stats()
 
@@ -171,14 +179,16 @@ class QuasiStableColoringGraph:
 
             witness_i, witness_j, split_deg, q_error = self.pick_witness()
             if q_error > q_error_before:
-                print(f"Q-error JUMPED! {q_error_before:.3f} → {q_error:.3f}")
+                print(f"Q-error JUMPED! {q_error_before:.3f} # {q_error:.3f}")
             q_error_before = q_error
             if q_error <= self.q:
                 break
 
             self.split_color(witness_i, witness_j, split_deg)
             self.update_stats_split(witness_i, len(self.partitions) - 1)
-            verbose and print(f"Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
+            if self.verbose:
+                print(f"Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
+                print("--------------------")
 
         print(f"QSC DONE: color count: {len(self.partitions)}, max q-error={q_error}")
 

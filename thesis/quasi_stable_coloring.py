@@ -252,7 +252,8 @@ class QuasiStableColoringGraph:
             rows, cols = self.color_stats.neighbor.shape
             if self.color_stats.n < m:
                 print(f"[iteration {iteration}] Limit of {self.color_stats.n} reached: Updated color stats size")
-                self.color_stats = self.color_stats.resize(self.color_stats.v, self.color_stats.n * 2)
+                new_n = 1 if m == 0 else 2**(m - 1).bit_length()
+                self.color_stats = self.color_stats.resize(self.color_stats.v, new_n)
             if cols < m:
                 extra_cols = csr_array((rows, m - cols), dtype=np.float64)
                 self.color_stats.neighbor = hstack([self.color_stats.neighbor, extra_cols])

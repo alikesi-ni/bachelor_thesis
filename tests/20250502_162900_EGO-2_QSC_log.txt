@@ -1,0 +1,220 @@
+2025-05-02 16:29:00 INFO  - Dataset: EGO-2
+2025-05-02 16:29:00 INFO  - Algorithm: QSC
+2025-05-02 16:29:00 INFO  - Parameters: q_grid=[8, 4, 2, 1, 0], n_max=1024, c_grid=[0.001, 0.01, 0.1, 1, 10, 100, 1000], folds=10, repeats=1, start_repeat=1
+2025-05-02 16:29:00 INFO  - [i=1] Dataset: EGO-2
+2025-05-02 16:29:04 INFO  - QSC DONE: color count: 2, max q-error=0.0, iterations=2
+2025-05-02 16:29:04 INFO  - [i=1 fold=1] Refined with q=8, n=2
+2025-05-02 16:29:09 INFO  - [iteration 8] Number of partitions: 10; Q-error: 62.0
+2025-05-02 16:29:14 INFO  - [iteration 15] Number of partitions: 20; Q-error: 36.0
+2025-05-02 16:29:27 INFO  - [iteration 28] Number of partitions: 50; Q-error: 15.0
+2025-05-02 16:29:34 INFO  - [iteration 30] Q-error JUMPED! 14.000 # 16.000
+2025-05-02 16:29:38 INFO  - [iteration 34] Q-error JUMPED! 12.000 # 38.000
+2025-05-02 16:29:38 INFO  - [iteration 34] Number of partitions: 70; Q-error: 38.0
+2025-05-02 16:29:42 INFO  - [iteration 40] Q-error JUMPED! 11.000 # 29.000
+2025-05-02 16:29:43 INFO  - [iteration 41] Number of partitions: 80; Q-error: 23.0
+2025-05-02 16:29:52 INFO  - [iteration 50] Q-error JUMPED! 10.000 # 32.000
+2025-05-02 16:29:54 INFO  - [iteration 52] Number of partitions: 100; Q-error: 23.0
+2025-05-02 16:29:59 INFO  - [iteration 58] Number of partitions: 110; Q-error: 10.0
+2025-05-02 16:30:05 INFO  - [iteration 60] Q-error JUMPED! 9.000 # 28.000
+2025-05-02 16:30:33 INFO  - [iteration 73] Number of partitions: 180; Q-error: 9.0
+2025-05-02 16:30:54 INFO  - [iteration 75] Q-error JUMPED! 8.000 # 21.000
+2025-05-02 16:31:53 INFO  - [iteration 85] Q-error JUMPED! 7.000 # 39.000
+2025-05-02 16:31:56 INFO  - [iteration 87] Number of partitions: 340; Q-error: 25.0
+2025-05-02 16:32:09 INFO  - [iteration 99] Number of partitions: 360; Q-error: 9.0
+2025-05-02 16:33:47 INFO  - [iteration 103] Q-error JUMPED! 6.000 # 15.000
+2025-05-02 16:33:49 INFO  - [iteration 105] Q-error JUMPED! 12.000 # 21.000
+2025-05-02 16:33:54 INFO  - [iteration 108] Q-error JUMPED! 10.000 # 22.000
+2025-05-02 16:34:02 INFO  - [iteration 113] Q-error JUMPED! 9.000 # 21.000
+2025-05-02 16:34:16 INFO  - [iteration 120] Q-error JUMPED! 8.000 # 13.000
+2025-05-02 16:34:49 INFO  - [iteration 126] Q-error JUMPED! 7.000 # 21.000
+2025-05-02 16:34:53 INFO  - [iteration 129] Number of partitions: 600; Q-error: 13.0
+2025-05-02 16:36:08 INFO  - [iteration 136] Q-error JUMPED! 6.000 # 24.000
+2025-05-02 16:36:10 INFO  - [iteration 137] Number of partitions: 720; Q-error: 19.0
+2025-05-02 16:39:46 INFO  - QSC DONE: color count: 1029, max q-error=5.0, iterations=143
+2025-05-02 16:39:46 INFO  - [i=1 fold=1] Refined with q=4, n=1029
+2025-05-02 16:39:50 INFO  - QSC DONE: color count: 1029, max q-error=inf, iterations=0
+2025-05-02 16:39:50 INFO  - [i=1 fold=1] Refined with q=2, n=1029
+2025-05-02 16:39:52 INFO  - QSC DONE: color count: 1029, max q-error=inf, iterations=0
+2025-05-02 16:39:53 INFO  - [i=1 fold=1] Refined with q=1, n=1029
+2025-05-02 16:39:55 INFO  - QSC DONE: color count: 1029, max q-error=inf, iterations=0
+2025-05-02 16:39:55 INFO  - [i=1 fold=1] Refined with q=0, n=1029
+2025-05-02 16:39:55 INFO  - [i=1 fold=1] C=0.001 q=8 n=2 Accuracy=0.2111
+2025-05-02 16:39:55 INFO  - [i=1 fold=1] C=0.01 q=8 n=2 Accuracy=0.2111
+2025-05-02 16:39:55 INFO  - [i=1 fold=1] C=0.1 q=8 n=2 Accuracy=0.2111
+2025-05-02 16:39:55 INFO  - [i=1 fold=1] C=1 q=8 n=2 Accuracy=0.2111
+2025-05-02 16:39:55 INFO  - [i=1 fold=1] C=10 q=8 n=2 Accuracy=0.3000
+2025-05-02 16:39:55 INFO  - [i=1 fold=1] C=100 q=8 n=2 Accuracy=0.2833
+2025-05-02 16:39:55 INFO  - [i=1 fold=1] C=1000 q=8 n=2 Accuracy=0.2944
+2025-05-02 16:39:56 INFO  - [i=1 fold=1] C=0.001 q=4 n=1029 Accuracy=0.3278
+2025-05-02 16:39:56 INFO  - [i=1 fold=1] C=0.01 q=4 n=1029 Accuracy=0.3278
+2025-05-02 16:39:56 INFO  - [i=1 fold=1] C=0.1 q=4 n=1029 Accuracy=0.3278
+2025-05-02 16:39:56 INFO  - [i=1 fold=1] C=1 q=4 n=1029 Accuracy=0.4333
+2025-05-02 16:39:56 INFO  - [i=1 fold=1] C=10 q=4 n=1029 Accuracy=0.6056
+2025-05-02 16:39:56 INFO  - [i=1 fold=1] C=100 q=4 n=1029 Accuracy=0.6556
+2025-05-02 16:39:57 INFO  - [i=1 fold=1] C=1000 q=4 n=1029 Accuracy=0.5778
+2025-05-02 16:39:57 INFO  - [i=1 fold=1] C=0.001 q=2 n=1029 Accuracy=0.3278
+2025-05-02 16:39:57 INFO  - [i=1 fold=1] C=0.01 q=2 n=1029 Accuracy=0.3278
+2025-05-02 16:39:57 INFO  - [i=1 fold=1] C=0.1 q=2 n=1029 Accuracy=0.3278
+2025-05-02 16:39:57 INFO  - [i=1 fold=1] C=1 q=2 n=1029 Accuracy=0.4333
+2025-05-02 16:39:58 INFO  - [i=1 fold=1] C=10 q=2 n=1029 Accuracy=0.6056
+2025-05-02 16:39:58 INFO  - [i=1 fold=1] C=100 q=2 n=1029 Accuracy=0.6556
+2025-05-02 16:39:59 INFO  - [i=1 fold=1] C=1000 q=2 n=1029 Accuracy=0.5778
+2025-05-02 16:39:59 INFO  - [i=1 fold=1] C=0.001 q=1 n=1029 Accuracy=0.3278
+2025-05-02 16:40:00 INFO  - [i=1 fold=1] C=0.01 q=1 n=1029 Accuracy=0.3278
+2025-05-02 16:40:00 INFO  - [i=1 fold=1] C=0.1 q=1 n=1029 Accuracy=0.3278
+2025-05-02 16:40:00 INFO  - [i=1 fold=1] C=1 q=1 n=1029 Accuracy=0.4333
+2025-05-02 16:40:00 INFO  - [i=1 fold=1] C=10 q=1 n=1029 Accuracy=0.6056
+2025-05-02 16:40:01 INFO  - [i=1 fold=1] C=100 q=1 n=1029 Accuracy=0.6556
+2025-05-02 16:40:01 INFO  - [i=1 fold=1] C=1000 q=1 n=1029 Accuracy=0.5778
+2025-05-02 16:40:01 INFO  - [i=1 fold=1] C=0.001 q=0 n=1029 Accuracy=0.3278
+2025-05-02 16:40:02 INFO  - [i=1 fold=1] C=0.01 q=0 n=1029 Accuracy=0.3278
+2025-05-02 16:40:02 INFO  - [i=1 fold=1] C=0.1 q=0 n=1029 Accuracy=0.3278
+2025-05-02 16:40:02 INFO  - [i=1 fold=1] C=1 q=0 n=1029 Accuracy=0.4333
+2025-05-02 16:40:03 INFO  - [i=1 fold=1] C=10 q=0 n=1029 Accuracy=0.6056
+2025-05-02 16:40:03 INFO  - [i=1 fold=1] C=100 q=0 n=1029 Accuracy=0.6556
+2025-05-02 16:40:04 INFO  - [i=1 fold=1] C=1000 q=0 n=1029 Accuracy=0.5778
+2025-05-02 16:40:04 INFO  - [i=1 fold=1] BEST C=100 q=4 n=1029 # Test Acc: 0.7000
+2025-05-02 16:40:20 INFO  - QSC DONE: color count: 2, max q-error=0.0, iterations=2
+2025-05-02 16:40:20 INFO  - [i=1 fold=2] Refined with q=8, n=2
+2025-05-02 16:40:38 INFO  - [iteration 8] Number of partitions: 10; Q-error: 62.0
+2025-05-02 16:40:47 INFO  - [iteration 15] Number of partitions: 20; Q-error: 36.0
+2025-05-02 16:41:01 INFO  - [iteration 28] Number of partitions: 50; Q-error: 15.0
+2025-05-02 16:41:09 INFO  - [iteration 30] Q-error JUMPED! 14.000 # 16.000
+2025-05-02 16:41:15 INFO  - [iteration 34] Q-error JUMPED! 12.000 # 38.000
+2025-05-02 16:41:15 INFO  - [iteration 34] Number of partitions: 70; Q-error: 38.0
+2025-05-02 16:41:20 INFO  - [iteration 40] Q-error JUMPED! 11.000 # 29.000
+2025-05-02 16:41:21 INFO  - [iteration 41] Number of partitions: 80; Q-error: 23.0
+2025-05-02 16:41:31 INFO  - [iteration 50] Q-error JUMPED! 10.000 # 32.000
+2025-05-02 16:41:33 INFO  - [iteration 52] Number of partitions: 100; Q-error: 23.0
+2025-05-02 16:41:39 INFO  - [iteration 58] Number of partitions: 110; Q-error: 10.0
+2025-05-02 16:41:45 INFO  - [iteration 60] Q-error JUMPED! 9.000 # 28.000
+2025-05-02 16:42:21 INFO  - [iteration 73] Number of partitions: 180; Q-error: 9.0
+2025-05-02 16:42:45 INFO  - [iteration 75] Q-error JUMPED! 8.000 # 21.000
+2025-05-02 16:43:48 INFO  - [iteration 85] Q-error JUMPED! 7.000 # 39.000
+2025-05-02 16:43:52 INFO  - [iteration 87] Number of partitions: 340; Q-error: 25.0
+2025-05-02 16:44:06 INFO  - [iteration 99] Number of partitions: 360; Q-error: 9.0
+2025-05-02 16:45:33 INFO  - [iteration 103] Q-error JUMPED! 6.000 # 15.000
+2025-05-02 16:45:35 INFO  - [iteration 105] Q-error JUMPED! 12.000 # 21.000
+2025-05-02 16:45:40 INFO  - [iteration 108] Q-error JUMPED! 10.000 # 22.000
+2025-05-02 16:45:48 INFO  - [iteration 113] Q-error JUMPED! 9.000 # 21.000
+2025-05-02 16:46:02 INFO  - [iteration 120] Q-error JUMPED! 8.000 # 13.000
+2025-05-02 16:46:34 INFO  - [iteration 126] Q-error JUMPED! 7.000 # 21.000
+2025-05-02 16:46:38 INFO  - [iteration 129] Number of partitions: 600; Q-error: 13.0
+2025-05-02 16:47:59 INFO  - [iteration 136] Q-error JUMPED! 6.000 # 24.000
+2025-05-02 16:48:02 INFO  - [iteration 137] Number of partitions: 720; Q-error: 19.0
+2025-05-02 16:52:08 INFO  - QSC DONE: color count: 1029, max q-error=5.0, iterations=143
+2025-05-02 16:52:08 INFO  - [i=1 fold=2] Refined with q=4, n=1029
+2025-05-02 16:52:10 INFO  - QSC DONE: color count: 1029, max q-error=inf, iterations=0
+2025-05-02 16:52:10 INFO  - [i=1 fold=2] Refined with q=2, n=1029
+2025-05-02 16:52:12 INFO  - QSC DONE: color count: 1029, max q-error=inf, iterations=0
+2025-05-02 16:52:12 INFO  - [i=1 fold=2] Refined with q=1, n=1029
+2025-05-02 16:52:13 INFO  - QSC DONE: color count: 1029, max q-error=inf, iterations=0
+2025-05-02 16:52:13 INFO  - [i=1 fold=2] Refined with q=0, n=1029
+2025-05-02 16:52:13 INFO  - [i=1 fold=2] C=0.001 q=8 n=2 Accuracy=0.1944
+2025-05-02 16:52:13 INFO  - [i=1 fold=2] C=0.01 q=8 n=2 Accuracy=0.1944
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=0.1 q=8 n=2 Accuracy=0.1944
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=1 q=8 n=2 Accuracy=0.1944
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=10 q=8 n=2 Accuracy=0.2833
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=100 q=8 n=2 Accuracy=0.3056
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=1000 q=8 n=2 Accuracy=0.3000
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=0.001 q=4 n=1029 Accuracy=0.3222
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=0.01 q=4 n=1029 Accuracy=0.3222
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=0.1 q=4 n=1029 Accuracy=0.3222
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=1 q=4 n=1029 Accuracy=0.4833
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=10 q=4 n=1029 Accuracy=0.6278
+2025-05-02 16:52:14 INFO  - [i=1 fold=2] C=100 q=4 n=1029 Accuracy=0.6611
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=1000 q=4 n=1029 Accuracy=0.6111
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=0.001 q=2 n=1029 Accuracy=0.3222
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=0.01 q=2 n=1029 Accuracy=0.3222
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=0.1 q=2 n=1029 Accuracy=0.3222
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=1 q=2 n=1029 Accuracy=0.4833
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=10 q=2 n=1029 Accuracy=0.6278
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=100 q=2 n=1029 Accuracy=0.6611
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=1000 q=2 n=1029 Accuracy=0.6111
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=0.001 q=1 n=1029 Accuracy=0.3222
+2025-05-02 16:52:15 INFO  - [i=1 fold=2] C=0.01 q=1 n=1029 Accuracy=0.3222
+2025-05-02 16:52:16 INFO  - [i=1 fold=2] C=0.1 q=1 n=1029 Accuracy=0.3222
+2025-05-02 16:52:16 INFO  - [i=1 fold=2] C=1 q=1 n=1029 Accuracy=0.4833
+2025-05-02 16:52:16 INFO  - [i=1 fold=2] C=10 q=1 n=1029 Accuracy=0.6278
+2025-05-02 16:52:16 INFO  - [i=1 fold=2] C=100 q=1 n=1029 Accuracy=0.6611
+2025-05-02 16:52:16 INFO  - [i=1 fold=2] C=1000 q=1 n=1029 Accuracy=0.6111
+2025-05-02 16:52:16 INFO  - [i=1 fold=2] C=0.001 q=0 n=1029 Accuracy=0.3222
+2025-05-02 16:52:16 INFO  - [i=1 fold=2] C=0.01 q=0 n=1029 Accuracy=0.3222
+2025-05-02 16:52:16 INFO  - [i=1 fold=2] C=0.1 q=0 n=1029 Accuracy=0.3222
+2025-05-02 16:52:17 INFO  - [i=1 fold=2] C=1 q=0 n=1029 Accuracy=0.4833
+2025-05-02 16:52:17 INFO  - [i=1 fold=2] C=10 q=0 n=1029 Accuracy=0.6278
+2025-05-02 16:52:17 INFO  - [i=1 fold=2] C=100 q=0 n=1029 Accuracy=0.6611
+2025-05-02 16:52:17 INFO  - [i=1 fold=2] C=1000 q=0 n=1029 Accuracy=0.6111
+2025-05-02 16:52:17 INFO  - [i=1 fold=2] BEST C=100 q=4 n=1029 # Test Acc: 0.7000
+2025-05-02 16:52:21 INFO  - QSC DONE: color count: 2, max q-error=0.0, iterations=2
+2025-05-02 16:52:21 INFO  - [i=1 fold=3] Refined with q=8, n=2
+2025-05-02 16:52:27 INFO  - [iteration 8] Number of partitions: 10; Q-error: 62.0
+2025-05-02 16:52:32 INFO  - [iteration 15] Number of partitions: 20; Q-error: 36.0
+2025-05-02 16:52:47 INFO  - [iteration 28] Number of partitions: 50; Q-error: 15.0
+2025-05-02 16:52:54 INFO  - [iteration 30] Q-error JUMPED! 14.000 # 16.000
+2025-05-02 16:52:58 INFO  - [iteration 34] Q-error JUMPED! 12.000 # 38.000
+2025-05-02 16:52:59 INFO  - [iteration 34] Number of partitions: 70; Q-error: 38.0
+2025-05-02 16:53:03 INFO  - [iteration 40] Q-error JUMPED! 11.000 # 29.000
+2025-05-02 16:53:04 INFO  - [iteration 41] Number of partitions: 80; Q-error: 23.0
+2025-05-02 16:53:15 INFO  - [iteration 50] Q-error JUMPED! 10.000 # 32.000
+2025-05-02 16:53:16 INFO  - [iteration 52] Number of partitions: 100; Q-error: 23.0
+2025-05-02 16:53:21 INFO  - [iteration 58] Number of partitions: 110; Q-error: 10.0
+2025-05-02 16:53:27 INFO  - [iteration 60] Q-error JUMPED! 9.000 # 28.000
+2025-05-02 16:53:59 INFO  - [iteration 73] Number of partitions: 180; Q-error: 9.0
+2025-05-02 16:54:23 INFO  - [iteration 75] Q-error JUMPED! 8.000 # 21.000
+2025-05-02 16:55:27 INFO  - [iteration 85] Q-error JUMPED! 7.000 # 39.000
+2025-05-02 16:55:30 INFO  - [iteration 87] Number of partitions: 340; Q-error: 25.0
+2025-05-02 16:55:43 INFO  - [iteration 99] Number of partitions: 360; Q-error: 9.0
+2025-05-02 16:57:13 INFO  - [iteration 103] Q-error JUMPED! 6.000 # 15.000
+2025-05-02 16:57:15 INFO  - [iteration 105] Q-error JUMPED! 12.000 # 21.000
+2025-05-02 16:57:19 INFO  - [iteration 108] Q-error JUMPED! 10.000 # 22.000
+2025-05-02 16:57:27 INFO  - [iteration 113] Q-error JUMPED! 9.000 # 21.000
+2025-05-02 16:57:42 INFO  - [iteration 120] Q-error JUMPED! 8.000 # 13.000
+2025-05-02 16:58:19 INFO  - [iteration 126] Q-error JUMPED! 7.000 # 21.000
+2025-05-02 16:58:23 INFO  - [iteration 129] Number of partitions: 600; Q-error: 13.0
+2025-05-02 16:59:41 INFO  - [iteration 136] Q-error JUMPED! 6.000 # 24.000
+2025-05-02 16:59:45 INFO  - [iteration 137] Number of partitions: 720; Q-error: 19.0
+2025-05-02 17:07:23 INFO  - QSC DONE: color count: 1029, max q-error=5.0, iterations=143
+2025-05-02 17:07:23 INFO  - [i=1 fold=3] Refined with q=4, n=1029
+2025-05-02 17:07:26 INFO  - QSC DONE: color count: 1029, max q-error=inf, iterations=0
+2025-05-02 17:07:26 INFO  - [i=1 fold=3] Refined with q=2, n=1029
+2025-05-02 17:07:28 INFO  - QSC DONE: color count: 1029, max q-error=inf, iterations=0
+2025-05-02 17:07:28 INFO  - [i=1 fold=3] Refined with q=1, n=1029
+2025-05-02 17:07:30 INFO  - QSC DONE: color count: 1029, max q-error=inf, iterations=0
+2025-05-02 17:07:30 INFO  - [i=1 fold=3] Refined with q=0, n=1029
+2025-05-02 17:07:30 INFO  - [i=1 fold=3] C=0.001 q=8 n=2 Accuracy=0.2333
+2025-05-02 17:07:30 INFO  - [i=1 fold=3] C=0.01 q=8 n=2 Accuracy=0.2333
+2025-05-02 17:07:30 INFO  - [i=1 fold=3] C=0.1 q=8 n=2 Accuracy=0.2333
+2025-05-02 17:07:30 INFO  - [i=1 fold=3] C=1 q=8 n=2 Accuracy=0.2333
+2025-05-02 17:07:31 INFO  - [i=1 fold=3] C=10 q=8 n=2 Accuracy=0.3167
+2025-05-02 17:07:31 INFO  - [i=1 fold=3] C=100 q=8 n=2 Accuracy=0.3111
+2025-05-02 17:07:31 INFO  - [i=1 fold=3] C=1000 q=8 n=2 Accuracy=0.3000
+2025-05-02 17:07:31 INFO  - [i=1 fold=3] C=0.001 q=4 n=1029 Accuracy=0.3278
+2025-05-02 17:07:32 INFO  - [i=1 fold=3] C=0.01 q=4 n=1029 Accuracy=0.3278
+2025-05-02 17:07:32 INFO  - [i=1 fold=3] C=0.1 q=4 n=1029 Accuracy=0.3278
+2025-05-02 17:07:32 INFO  - [i=1 fold=3] C=1 q=4 n=1029 Accuracy=0.4333
+2025-05-02 17:07:32 INFO  - [i=1 fold=3] C=10 q=4 n=1029 Accuracy=0.6000
+2025-05-02 17:07:32 INFO  - [i=1 fold=3] C=100 q=4 n=1029 Accuracy=0.6611
+2025-05-02 17:07:33 INFO  - [i=1 fold=3] C=1000 q=4 n=1029 Accuracy=0.6000
+2025-05-02 17:07:33 INFO  - [i=1 fold=3] C=0.001 q=2 n=1029 Accuracy=0.3278
+2025-05-02 17:07:33 INFO  - [i=1 fold=3] C=0.01 q=2 n=1029 Accuracy=0.3278
+2025-05-02 17:07:33 INFO  - [i=1 fold=3] C=0.1 q=2 n=1029 Accuracy=0.3278
+2025-05-02 17:07:34 INFO  - [i=1 fold=3] C=1 q=2 n=1029 Accuracy=0.4333
+2025-05-02 17:07:34 INFO  - [i=1 fold=3] C=10 q=2 n=1029 Accuracy=0.6000
+2025-05-02 17:07:34 INFO  - [i=1 fold=3] C=100 q=2 n=1029 Accuracy=0.6611
+2025-05-02 17:07:34 INFO  - [i=1 fold=3] C=1000 q=2 n=1029 Accuracy=0.6000
+2025-05-02 17:07:35 INFO  - [i=1 fold=3] C=0.001 q=1 n=1029 Accuracy=0.3278
+2025-05-02 17:07:35 INFO  - [i=1 fold=3] C=0.01 q=1 n=1029 Accuracy=0.3278
+2025-05-02 17:07:35 INFO  - [i=1 fold=3] C=0.1 q=1 n=1029 Accuracy=0.3278
+2025-05-02 17:07:35 INFO  - [i=1 fold=3] C=1 q=1 n=1029 Accuracy=0.4333
+2025-05-02 17:07:36 INFO  - [i=1 fold=3] C=10 q=1 n=1029 Accuracy=0.6000
+2025-05-02 17:07:36 INFO  - [i=1 fold=3] C=100 q=1 n=1029 Accuracy=0.6611
+2025-05-02 17:07:36 INFO  - [i=1 fold=3] C=1000 q=1 n=1029 Accuracy=0.6000
+2025-05-02 17:07:36 INFO  - [i=1 fold=3] C=0.001 q=0 n=1029 Accuracy=0.3278
+2025-05-02 17:07:36 INFO  - [i=1 fold=3] C=0.01 q=0 n=1029 Accuracy=0.3278
+2025-05-02 17:07:37 INFO  - [i=1 fold=3] C=0.1 q=0 n=1029 Accuracy=0.3278
+2025-05-02 17:07:37 INFO  - [i=1 fold=3] C=1 q=0 n=1029 Accuracy=0.4333
+2025-05-02 17:07:37 INFO  - [i=1 fold=3] C=10 q=0 n=1029 Accuracy=0.6000
+2025-05-02 17:07:38 INFO  - [i=1 fold=3] C=100 q=0 n=1029 Accuracy=0.6611
+2025-05-02 17:07:38 INFO  - [i=1 fold=3] C=1000 q=0 n=1029 Accuracy=0.6000
+2025-05-02 17:07:38 INFO  - [i=1 fold=3] BEST C=100 q=4 n=1029 # Test Acc: 0.7500

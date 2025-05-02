@@ -35,7 +35,7 @@ for dataset_name in dataset_names:
 
     h_grid = list(range(1, 11))
     k_grid = [2, 4, 8, 16]
-    q_grid = [2**i for i in range(3, -1, -1)]
+    q_grid = [2**i for i in range(3, -1, -1)] + [0]
     n_max = 512
 
     c_grid = [10**i for i in range(-3, 4)]  # SVM C ∈ {1e-3 to 1e3}

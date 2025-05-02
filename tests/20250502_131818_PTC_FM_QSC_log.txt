@@ -1,0 +1,404 @@
+2025-05-02 13:18:18 INFO  - Dataset: PTC_FM
+2025-05-02 13:18:18 INFO  - Algorithm: QSC
+2025-05-02 13:18:18 INFO  - Parameters: q_grid=[8, 4, 2, 1], n_max=512, c_grid=[0.001, 0.01, 0.1, 1, 10, 100, 1000], folds=10, repeats=1, start_repeat=1
+2025-05-02 13:18:18 INFO  - [i=1] Dataset: PTC_FM
+2025-05-02 13:18:19 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:18:19 INFO  - [i=1 fold=1] Refined with q=8, n=18
+2025-05-02 13:18:19 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:18:19 INFO  - [i=1 fold=1] Refined with q=4, n=18
+2025-05-02 13:18:20 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:18:20 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:18:20 INFO  - [i=1 fold=1] Refined with q=2, n=35
+2025-05-02 13:18:21 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:18:25 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:18:26 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:18:26 INFO  - [i=1 fold=1] Refined with q=1, n=91
+2025-05-02 13:18:26 INFO  - [i=1 fold=1] C=0.001 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:26 INFO  - [i=1 fold=1] C=0.01 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:26 INFO  - [i=1 fold=1] C=0.1 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:26 INFO  - [i=1 fold=1] C=1 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:27 INFO  - [i=1 fold=1] C=10 q=8 n=18 Accuracy=0.5987
+2025-05-02 13:18:27 INFO  - [i=1 fold=1] C=100 q=8 n=18 Accuracy=0.5956
+2025-05-02 13:18:27 INFO  - [i=1 fold=1] C=1000 q=8 n=18 Accuracy=0.5924
+2025-05-02 13:18:27 INFO  - [i=1 fold=1] C=0.001 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:27 INFO  - [i=1 fold=1] C=0.01 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:27 INFO  - [i=1 fold=1] C=0.1 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:27 INFO  - [i=1 fold=1] C=1 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:28 INFO  - [i=1 fold=1] C=10 q=4 n=18 Accuracy=0.5987
+2025-05-02 13:18:28 INFO  - [i=1 fold=1] C=100 q=4 n=18 Accuracy=0.5956
+2025-05-02 13:18:28 INFO  - [i=1 fold=1] C=1000 q=4 n=18 Accuracy=0.5924
+2025-05-02 13:18:28 INFO  - [i=1 fold=1] C=0.001 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:18:28 INFO  - [i=1 fold=1] C=0.01 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:18:28 INFO  - [i=1 fold=1] C=0.1 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:18:28 INFO  - [i=1 fold=1] C=1 q=2 n=35 Accuracy=0.5924
+2025-05-02 13:18:29 INFO  - [i=1 fold=1] C=10 q=2 n=35 Accuracy=0.6116
+2025-05-02 13:18:29 INFO  - [i=1 fold=1] C=100 q=2 n=35 Accuracy=0.6019
+2025-05-02 13:18:29 INFO  - [i=1 fold=1] C=1000 q=2 n=35 Accuracy=0.6276
+2025-05-02 13:18:29 INFO  - [i=1 fold=1] C=0.001 q=1 n=91 Accuracy=0.5923
+2025-05-02 13:18:30 INFO  - [i=1 fold=1] C=0.01 q=1 n=91 Accuracy=0.5923
+2025-05-02 13:18:30 INFO  - [i=1 fold=1] C=0.1 q=1 n=91 Accuracy=0.5923
+2025-05-02 13:18:30 INFO  - [i=1 fold=1] C=1 q=1 n=91 Accuracy=0.5956
+2025-05-02 13:18:30 INFO  - [i=1 fold=1] C=10 q=1 n=91 Accuracy=0.5826
+2025-05-02 13:18:30 INFO  - [i=1 fold=1] C=100 q=1 n=91 Accuracy=0.5892
+2025-05-02 13:18:31 INFO  - [i=1 fold=1] C=1000 q=1 n=91 Accuracy=0.5665
+2025-05-02 13:18:31 INFO  - [i=1 fold=1] BEST C=1000 q=2 n=35 # Test Acc: 0.5143
+2025-05-02 13:18:31 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:18:31 INFO  - [i=1 fold=2] Refined with q=8, n=18
+2025-05-02 13:18:31 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:18:32 INFO  - [i=1 fold=2] Refined with q=4, n=18
+2025-05-02 13:18:33 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:18:33 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:18:33 INFO  - [i=1 fold=2] Refined with q=2, n=35
+2025-05-02 13:18:34 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:18:38 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:18:38 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] Refined with q=1, n=91
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] C=0.001 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] C=0.01 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] C=0.1 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] C=1 q=8 n=18 Accuracy=0.5893
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] C=10 q=8 n=18 Accuracy=0.5828
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] C=100 q=8 n=18 Accuracy=0.5830
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] C=1000 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] C=0.001 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:39 INFO  - [i=1 fold=2] C=0.01 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:40 INFO  - [i=1 fold=2] C=0.1 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:40 INFO  - [i=1 fold=2] C=1 q=4 n=18 Accuracy=0.5893
+2025-05-02 13:18:40 INFO  - [i=1 fold=2] C=10 q=4 n=18 Accuracy=0.5828
+2025-05-02 13:18:40 INFO  - [i=1 fold=2] C=100 q=4 n=18 Accuracy=0.5830
+2025-05-02 13:18:40 INFO  - [i=1 fold=2] C=1000 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:18:40 INFO  - [i=1 fold=2] C=0.001 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:18:40 INFO  - [i=1 fold=2] C=0.01 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:18:40 INFO  - [i=1 fold=2] C=0.1 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:18:40 INFO  - [i=1 fold=2] C=1 q=2 n=35 Accuracy=0.5892
+2025-05-02 13:18:41 INFO  - [i=1 fold=2] C=10 q=2 n=35 Accuracy=0.5893
+2025-05-02 13:18:41 INFO  - [i=1 fold=2] C=100 q=2 n=35 Accuracy=0.5572
+2025-05-02 13:18:41 INFO  - [i=1 fold=2] C=1000 q=2 n=35 Accuracy=0.5699
+2025-05-02 13:18:41 INFO  - [i=1 fold=2] C=0.001 q=1 n=91 Accuracy=0.5923
+2025-05-02 13:18:41 INFO  - [i=1 fold=2] C=0.01 q=1 n=91 Accuracy=0.5923
+2025-05-02 13:18:41 INFO  - [i=1 fold=2] C=0.1 q=1 n=91 Accuracy=0.5923
+2025-05-02 13:18:41 INFO  - [i=1 fold=2] C=1 q=1 n=91 Accuracy=0.5829
+2025-05-02 13:18:41 INFO  - [i=1 fold=2] C=10 q=1 n=91 Accuracy=0.5766
+2025-05-02 13:18:41 INFO  - [i=1 fold=2] C=100 q=1 n=91 Accuracy=0.5508
+2025-05-02 13:18:43 INFO  - [i=1 fold=2] C=1000 q=1 n=91 Accuracy=0.5408
+2025-05-02 13:18:43 INFO  - [i=1 fold=2] BEST C=0.001 q=8 n=18 # Test Acc: 0.5714
+2025-05-02 13:18:43 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:18:43 INFO  - [i=1 fold=3] Refined with q=8, n=18
+2025-05-02 13:18:43 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:18:43 INFO  - [i=1 fold=3] Refined with q=4, n=18
+2025-05-02 13:18:44 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:18:44 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:18:44 INFO  - [i=1 fold=3] Refined with q=2, n=35
+2025-05-02 13:18:45 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:18:50 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:18:50 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:18:50 INFO  - [i=1 fold=3] Refined with q=1, n=91
+2025-05-02 13:18:50 INFO  - [i=1 fold=3] C=0.001 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:50 INFO  - [i=1 fold=3] C=0.01 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:50 INFO  - [i=1 fold=3] C=0.1 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:18:50 INFO  - [i=1 fold=3] C=1 q=8 n=18 Accuracy=0.5858
+2025-05-02 13:18:50 INFO  - [i=1 fold=3] C=10 q=8 n=18 Accuracy=0.5765
+2025-05-02 13:18:50 INFO  - [i=1 fold=3] C=100 q=8 n=18 Accuracy=0.5796
+2025-05-02 13:18:51 INFO  - [i=1 fold=3] C=1000 q=8 n=18 Accuracy=0.5735
+2025-05-02 13:18:51 INFO  - [i=1 fold=3] C=0.001 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:51 INFO  - [i=1 fold=3] C=0.01 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:51 INFO  - [i=1 fold=3] C=0.1 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:18:51 INFO  - [i=1 fold=3] C=1 q=4 n=18 Accuracy=0.5858
+2025-05-02 13:18:51 INFO  - [i=1 fold=3] C=10 q=4 n=18 Accuracy=0.5765
+2025-05-02 13:18:51 INFO  - [i=1 fold=3] C=100 q=4 n=18 Accuracy=0.5796
+2025-05-02 13:18:52 INFO  - [i=1 fold=3] C=1000 q=4 n=18 Accuracy=0.5735
+2025-05-02 13:18:52 INFO  - [i=1 fold=3] C=0.001 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:18:52 INFO  - [i=1 fold=3] C=0.01 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:18:52 INFO  - [i=1 fold=3] C=0.1 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:18:52 INFO  - [i=1 fold=3] C=1 q=2 n=35 Accuracy=0.5826
+2025-05-02 13:18:52 INFO  - [i=1 fold=3] C=10 q=2 n=35 Accuracy=0.5762
+2025-05-02 13:18:52 INFO  - [i=1 fold=3] C=100 q=2 n=35 Accuracy=0.5766
+2025-05-02 13:18:53 INFO  - [i=1 fold=3] C=1000 q=2 n=35 Accuracy=0.6022
+2025-05-02 13:18:53 INFO  - [i=1 fold=3] C=0.001 q=1 n=91 Accuracy=0.5923
+2025-05-02 13:18:53 INFO  - [i=1 fold=3] C=0.01 q=1 n=91 Accuracy=0.5923
+2025-05-02 13:18:53 INFO  - [i=1 fold=3] C=0.1 q=1 n=91 Accuracy=0.5923
+2025-05-02 13:18:53 INFO  - [i=1 fold=3] C=1 q=1 n=91 Accuracy=0.5858
+2025-05-02 13:18:53 INFO  - [i=1 fold=3] C=10 q=1 n=91 Accuracy=0.5828
+2025-05-02 13:18:53 INFO  - [i=1 fold=3] C=100 q=1 n=91 Accuracy=0.5479
+2025-05-02 13:18:54 INFO  - [i=1 fold=3] C=1000 q=1 n=91 Accuracy=0.5414
+2025-05-02 13:18:54 INFO  - [i=1 fold=3] BEST C=1000 q=2 n=35 # Test Acc: 0.6286
+2025-05-02 13:18:54 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:18:54 INFO  - [i=1 fold=4] Refined with q=8, n=18
+2025-05-02 13:18:55 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:18:55 INFO  - [i=1 fold=4] Refined with q=4, n=18
+2025-05-02 13:18:56 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:18:56 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:18:56 INFO  - [i=1 fold=4] Refined with q=2, n=35
+2025-05-02 13:18:57 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:19:01 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:19:01 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:19:01 INFO  - [i=1 fold=4] Refined with q=1, n=91
+2025-05-02 13:19:01 INFO  - [i=1 fold=4] C=0.001 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:01 INFO  - [i=1 fold=4] C=0.01 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:01 INFO  - [i=1 fold=4] C=0.1 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:01 INFO  - [i=1 fold=4] C=1 q=8 n=18 Accuracy=0.5859
+2025-05-02 13:19:01 INFO  - [i=1 fold=4] C=10 q=8 n=18 Accuracy=0.6048
+2025-05-02 13:19:02 INFO  - [i=1 fold=4] C=100 q=8 n=18 Accuracy=0.5986
+2025-05-02 13:19:02 INFO  - [i=1 fold=4] C=1000 q=8 n=18 Accuracy=0.6049
+2025-05-02 13:19:02 INFO  - [i=1 fold=4] C=0.001 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:02 INFO  - [i=1 fold=4] C=0.01 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:02 INFO  - [i=1 fold=4] C=0.1 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:02 INFO  - [i=1 fold=4] C=1 q=4 n=18 Accuracy=0.5859
+2025-05-02 13:19:02 INFO  - [i=1 fold=4] C=10 q=4 n=18 Accuracy=0.6048
+2025-05-02 13:19:02 INFO  - [i=1 fold=4] C=100 q=4 n=18 Accuracy=0.5986
+2025-05-02 13:19:03 INFO  - [i=1 fold=4] C=1000 q=4 n=18 Accuracy=0.6049
+2025-05-02 13:19:03 INFO  - [i=1 fold=4] C=0.001 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:03 INFO  - [i=1 fold=4] C=0.01 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:03 INFO  - [i=1 fold=4] C=0.1 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:03 INFO  - [i=1 fold=4] C=1 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:19:03 INFO  - [i=1 fold=4] C=10 q=2 n=35 Accuracy=0.5987
+2025-05-02 13:19:03 INFO  - [i=1 fold=4] C=100 q=2 n=35 Accuracy=0.5671
+2025-05-02 13:19:04 INFO  - [i=1 fold=4] C=1000 q=2 n=35 Accuracy=0.5735
+2025-05-02 13:19:04 INFO  - [i=1 fold=4] C=0.001 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:04 INFO  - [i=1 fold=4] C=0.01 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:04 INFO  - [i=1 fold=4] C=0.1 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:04 INFO  - [i=1 fold=4] C=1 q=1 n=91 Accuracy=0.5956
+2025-05-02 13:19:04 INFO  - [i=1 fold=4] C=10 q=1 n=91 Accuracy=0.5607
+2025-05-02 13:19:04 INFO  - [i=1 fold=4] C=100 q=1 n=91 Accuracy=0.5418
+2025-05-02 13:19:05 INFO  - [i=1 fold=4] C=1000 q=1 n=91 Accuracy=0.5321
+2025-05-02 13:19:05 INFO  - [i=1 fold=4] BEST C=1000 q=8 n=18 # Test Acc: 0.5714
+2025-05-02 13:19:05 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:05 INFO  - [i=1 fold=5] Refined with q=8, n=18
+2025-05-02 13:19:05 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:06 INFO  - [i=1 fold=5] Refined with q=4, n=18
+2025-05-02 13:19:07 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:19:07 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:19:07 INFO  - [i=1 fold=5] Refined with q=2, n=35
+2025-05-02 13:19:08 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:19:12 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:19:12 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:19:13 INFO  - [i=1 fold=5] Refined with q=1, n=91
+2025-05-02 13:19:13 INFO  - [i=1 fold=5] C=0.001 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:13 INFO  - [i=1 fold=5] C=0.01 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:13 INFO  - [i=1 fold=5] C=0.1 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:13 INFO  - [i=1 fold=5] C=1 q=8 n=18 Accuracy=0.5921
+2025-05-02 13:19:13 INFO  - [i=1 fold=5] C=10 q=8 n=18 Accuracy=0.5987
+2025-05-02 13:19:13 INFO  - [i=1 fold=5] C=100 q=8 n=18 Accuracy=0.5925
+2025-05-02 13:19:13 INFO  - [i=1 fold=5] C=1000 q=8 n=18 Accuracy=0.5864
+2025-05-02 13:19:13 INFO  - [i=1 fold=5] C=0.001 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:14 INFO  - [i=1 fold=5] C=0.01 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:14 INFO  - [i=1 fold=5] C=0.1 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:14 INFO  - [i=1 fold=5] C=1 q=4 n=18 Accuracy=0.5921
+2025-05-02 13:19:14 INFO  - [i=1 fold=5] C=10 q=4 n=18 Accuracy=0.5987
+2025-05-02 13:19:14 INFO  - [i=1 fold=5] C=100 q=4 n=18 Accuracy=0.5925
+2025-05-02 13:19:14 INFO  - [i=1 fold=5] C=1000 q=4 n=18 Accuracy=0.5864
+2025-05-02 13:19:14 INFO  - [i=1 fold=5] C=0.001 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:14 INFO  - [i=1 fold=5] C=0.01 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:15 INFO  - [i=1 fold=5] C=0.1 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:15 INFO  - [i=1 fold=5] C=1 q=2 n=35 Accuracy=0.5859
+2025-05-02 13:19:15 INFO  - [i=1 fold=5] C=10 q=2 n=35 Accuracy=0.5890
+2025-05-02 13:19:15 INFO  - [i=1 fold=5] C=100 q=2 n=35 Accuracy=0.5823
+2025-05-02 13:19:15 INFO  - [i=1 fold=5] C=1000 q=2 n=35 Accuracy=0.5699
+2025-05-02 13:19:15 INFO  - [i=1 fold=5] C=0.001 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:15 INFO  - [i=1 fold=5] C=0.01 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:15 INFO  - [i=1 fold=5] C=0.1 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:16 INFO  - [i=1 fold=5] C=1 q=1 n=91 Accuracy=0.5859
+2025-05-02 13:19:16 INFO  - [i=1 fold=5] C=10 q=1 n=91 Accuracy=0.5474
+2025-05-02 13:19:16 INFO  - [i=1 fold=5] C=100 q=1 n=91 Accuracy=0.5606
+2025-05-02 13:19:17 INFO  - [i=1 fold=5] C=1000 q=1 n=91 Accuracy=0.5575
+2025-05-02 13:19:17 INFO  - [i=1 fold=5] BEST C=10 q=8 n=18 # Test Acc: 0.6000
+2025-05-02 13:19:17 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:17 INFO  - [i=1 fold=6] Refined with q=8, n=18
+2025-05-02 13:19:17 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:17 INFO  - [i=1 fold=6] Refined with q=4, n=18
+2025-05-02 13:19:19 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:19:19 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:19:19 INFO  - [i=1 fold=6] Refined with q=2, n=35
+2025-05-02 13:19:20 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:19:24 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:19:25 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:19:25 INFO  - [i=1 fold=6] Refined with q=1, n=91
+2025-05-02 13:19:25 INFO  - [i=1 fold=6] C=0.001 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:25 INFO  - [i=1 fold=6] C=0.01 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:25 INFO  - [i=1 fold=6] C=0.1 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:25 INFO  - [i=1 fold=6] C=1 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:19:25 INFO  - [i=1 fold=6] C=10 q=8 n=18 Accuracy=0.6020
+2025-05-02 13:19:25 INFO  - [i=1 fold=6] C=100 q=8 n=18 Accuracy=0.6020
+2025-05-02 13:19:25 INFO  - [i=1 fold=6] C=1000 q=8 n=18 Accuracy=0.5862
+2025-05-02 13:19:25 INFO  - [i=1 fold=6] C=0.001 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=0.01 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=0.1 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=1 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=10 q=4 n=18 Accuracy=0.6020
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=100 q=4 n=18 Accuracy=0.6020
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=1000 q=4 n=18 Accuracy=0.5862
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=0.001 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=0.01 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=0.1 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:26 INFO  - [i=1 fold=6] C=1 q=2 n=35 Accuracy=0.5859
+2025-05-02 13:19:27 INFO  - [i=1 fold=6] C=10 q=2 n=35 Accuracy=0.5988
+2025-05-02 13:19:27 INFO  - [i=1 fold=6] C=100 q=2 n=35 Accuracy=0.5957
+2025-05-02 13:19:28 INFO  - [i=1 fold=6] C=1000 q=2 n=35 Accuracy=0.5831
+2025-05-02 13:19:28 INFO  - [i=1 fold=6] C=0.001 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:28 INFO  - [i=1 fold=6] C=0.01 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:28 INFO  - [i=1 fold=6] C=0.1 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:28 INFO  - [i=1 fold=6] C=1 q=1 n=91 Accuracy=0.5922
+2025-05-02 13:19:29 INFO  - [i=1 fold=6] C=10 q=1 n=91 Accuracy=0.5862
+2025-05-02 13:19:29 INFO  - [i=1 fold=6] C=100 q=1 n=91 Accuracy=0.5450
+2025-05-02 13:19:30 INFO  - [i=1 fold=6] C=1000 q=1 n=91 Accuracy=0.5226
+2025-05-02 13:19:30 INFO  - [i=1 fold=6] BEST C=10 q=8 n=18 # Test Acc: 0.5714
+2025-05-02 13:19:30 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:30 INFO  - [i=1 fold=7] Refined with q=8, n=18
+2025-05-02 13:19:30 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:30 INFO  - [i=1 fold=7] Refined with q=4, n=18
+2025-05-02 13:19:31 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:19:31 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:19:31 INFO  - [i=1 fold=7] Refined with q=2, n=35
+2025-05-02 13:19:32 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:19:36 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:19:37 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:19:37 INFO  - [i=1 fold=7] Refined with q=1, n=91
+2025-05-02 13:19:37 INFO  - [i=1 fold=7] C=0.001 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:37 INFO  - [i=1 fold=7] C=0.01 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:37 INFO  - [i=1 fold=7] C=0.1 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:37 INFO  - [i=1 fold=7] C=1 q=8 n=18 Accuracy=0.5826
+2025-05-02 13:19:37 INFO  - [i=1 fold=7] C=10 q=8 n=18 Accuracy=0.5860
+2025-05-02 13:19:37 INFO  - [i=1 fold=7] C=100 q=8 n=18 Accuracy=0.5762
+2025-05-02 13:19:38 INFO  - [i=1 fold=7] C=1000 q=8 n=18 Accuracy=0.5795
+2025-05-02 13:19:38 INFO  - [i=1 fold=7] C=0.001 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:38 INFO  - [i=1 fold=7] C=0.01 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:38 INFO  - [i=1 fold=7] C=0.1 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:38 INFO  - [i=1 fold=7] C=1 q=4 n=18 Accuracy=0.5826
+2025-05-02 13:19:39 INFO  - [i=1 fold=7] C=10 q=4 n=18 Accuracy=0.5860
+2025-05-02 13:19:39 INFO  - [i=1 fold=7] C=100 q=4 n=18 Accuracy=0.5762
+2025-05-02 13:19:40 INFO  - [i=1 fold=7] C=1000 q=4 n=18 Accuracy=0.5795
+2025-05-02 13:19:40 INFO  - [i=1 fold=7] C=0.001 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:40 INFO  - [i=1 fold=7] C=0.01 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:40 INFO  - [i=1 fold=7] C=0.1 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:40 INFO  - [i=1 fold=7] C=1 q=2 n=35 Accuracy=0.5666
+2025-05-02 13:19:40 INFO  - [i=1 fold=7] C=10 q=2 n=35 Accuracy=0.5921
+2025-05-02 13:19:40 INFO  - [i=1 fold=7] C=100 q=2 n=35 Accuracy=0.5825
+2025-05-02 13:19:40 INFO  - [i=1 fold=7] C=1000 q=2 n=35 Accuracy=0.5794
+2025-05-02 13:19:41 INFO  - [i=1 fold=7] C=0.001 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:41 INFO  - [i=1 fold=7] C=0.01 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:41 INFO  - [i=1 fold=7] C=0.1 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:41 INFO  - [i=1 fold=7] C=1 q=1 n=91 Accuracy=0.5699
+2025-05-02 13:19:41 INFO  - [i=1 fold=7] C=10 q=1 n=91 Accuracy=0.5666
+2025-05-02 13:19:41 INFO  - [i=1 fold=7] C=100 q=1 n=91 Accuracy=0.5699
+2025-05-02 13:19:42 INFO  - [i=1 fold=7] C=1000 q=1 n=91 Accuracy=0.5410
+2025-05-02 13:19:42 INFO  - [i=1 fold=7] BEST C=10 q=2 n=35 # Test Acc: 0.6000
+2025-05-02 13:19:42 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:42 INFO  - [i=1 fold=8] Refined with q=8, n=18
+2025-05-02 13:19:42 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:42 INFO  - [i=1 fold=8] Refined with q=4, n=18
+2025-05-02 13:19:43 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:19:44 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:19:44 INFO  - [i=1 fold=8] Refined with q=2, n=35
+2025-05-02 13:19:44 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:19:48 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:19:49 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:19:49 INFO  - [i=1 fold=8] Refined with q=1, n=91
+2025-05-02 13:19:49 INFO  - [i=1 fold=8] C=0.001 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:49 INFO  - [i=1 fold=8] C=0.01 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:49 INFO  - [i=1 fold=8] C=0.1 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:19:49 INFO  - [i=1 fold=8] C=1 q=8 n=18 Accuracy=0.5861
+2025-05-02 13:19:49 INFO  - [i=1 fold=8] C=10 q=8 n=18 Accuracy=0.5923
+2025-05-02 13:19:49 INFO  - [i=1 fold=8] C=100 q=8 n=18 Accuracy=0.5988
+2025-05-02 13:19:51 INFO  - [i=1 fold=8] C=1000 q=8 n=18 Accuracy=0.5956
+2025-05-02 13:19:51 INFO  - [i=1 fold=8] C=0.001 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:51 INFO  - [i=1 fold=8] C=0.01 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:51 INFO  - [i=1 fold=8] C=0.1 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:19:51 INFO  - [i=1 fold=8] C=1 q=4 n=18 Accuracy=0.5861
+2025-05-02 13:19:51 INFO  - [i=1 fold=8] C=10 q=4 n=18 Accuracy=0.5923
+2025-05-02 13:19:51 INFO  - [i=1 fold=8] C=100 q=4 n=18 Accuracy=0.5988
+2025-05-02 13:19:52 INFO  - [i=1 fold=8] C=1000 q=4 n=18 Accuracy=0.5956
+2025-05-02 13:19:52 INFO  - [i=1 fold=8] C=0.001 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:53 INFO  - [i=1 fold=8] C=0.01 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:53 INFO  - [i=1 fold=8] C=0.1 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:53 INFO  - [i=1 fold=8] C=1 q=2 n=35 Accuracy=0.5892
+2025-05-02 13:19:53 INFO  - [i=1 fold=8] C=10 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:19:53 INFO  - [i=1 fold=8] C=100 q=2 n=35 Accuracy=0.5922
+2025-05-02 13:19:53 INFO  - [i=1 fold=8] C=1000 q=2 n=35 Accuracy=0.5923
+2025-05-02 13:19:54 INFO  - [i=1 fold=8] C=0.001 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:54 INFO  - [i=1 fold=8] C=0.01 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:54 INFO  - [i=1 fold=8] C=0.1 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:54 INFO  - [i=1 fold=8] C=1 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:19:54 INFO  - [i=1 fold=8] C=10 q=1 n=91 Accuracy=0.5668
+2025-05-02 13:19:54 INFO  - [i=1 fold=8] C=100 q=1 n=91 Accuracy=0.5508
+2025-05-02 13:19:55 INFO  - [i=1 fold=8] C=1000 q=1 n=91 Accuracy=0.5315
+2025-05-02 13:19:55 INFO  - [i=1 fold=8] BEST C=100 q=8 n=18 # Test Acc: 0.6000
+2025-05-02 13:19:55 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:55 INFO  - [i=1 fold=9] Refined with q=8, n=18
+2025-05-02 13:19:55 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:19:55 INFO  - [i=1 fold=9] Refined with q=4, n=18
+2025-05-02 13:19:57 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:19:57 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:19:57 INFO  - [i=1 fold=9] Refined with q=2, n=35
+2025-05-02 13:19:57 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:20:02 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:20:02 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:20:02 INFO  - [i=1 fold=9] Refined with q=1, n=91
+2025-05-02 13:20:02 INFO  - [i=1 fold=9] C=0.001 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:20:02 INFO  - [i=1 fold=9] C=0.01 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:20:02 INFO  - [i=1 fold=9] C=0.1 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:20:02 INFO  - [i=1 fold=9] C=1 q=8 n=18 Accuracy=0.5891
+2025-05-02 13:20:02 INFO  - [i=1 fold=9] C=10 q=8 n=18 Accuracy=0.5892
+2025-05-02 13:20:02 INFO  - [i=1 fold=9] C=100 q=8 n=18 Accuracy=0.5924
+2025-05-02 13:20:03 INFO  - [i=1 fold=9] C=1000 q=8 n=18 Accuracy=0.5989
+2025-05-02 13:20:03 INFO  - [i=1 fold=9] C=0.001 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:20:03 INFO  - [i=1 fold=9] C=0.01 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:20:03 INFO  - [i=1 fold=9] C=0.1 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:20:03 INFO  - [i=1 fold=9] C=1 q=4 n=18 Accuracy=0.5891
+2025-05-02 13:20:03 INFO  - [i=1 fold=9] C=10 q=4 n=18 Accuracy=0.5892
+2025-05-02 13:20:03 INFO  - [i=1 fold=9] C=100 q=4 n=18 Accuracy=0.5924
+2025-05-02 13:20:04 INFO  - [i=1 fold=9] C=1000 q=4 n=18 Accuracy=0.5989
+2025-05-02 13:20:04 INFO  - [i=1 fold=9] C=0.001 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:20:04 INFO  - [i=1 fold=9] C=0.01 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:20:05 INFO  - [i=1 fold=9] C=0.1 q=2 n=35 Accuracy=0.5891
+2025-05-02 13:20:05 INFO  - [i=1 fold=9] C=1 q=2 n=35 Accuracy=0.5858
+2025-05-02 13:20:05 INFO  - [i=1 fold=9] C=10 q=2 n=35 Accuracy=0.5764
+2025-05-02 13:20:05 INFO  - [i=1 fold=9] C=100 q=2 n=35 Accuracy=0.5763
+2025-05-02 13:20:06 INFO  - [i=1 fold=9] C=1000 q=2 n=35 Accuracy=0.5858
+2025-05-02 13:20:06 INFO  - [i=1 fold=9] C=0.001 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:20:06 INFO  - [i=1 fold=9] C=0.01 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:20:06 INFO  - [i=1 fold=9] C=0.1 q=1 n=91 Accuracy=0.5891
+2025-05-02 13:20:06 INFO  - [i=1 fold=9] C=1 q=1 n=91 Accuracy=0.5825
+2025-05-02 13:20:07 INFO  - [i=1 fold=9] C=10 q=1 n=91 Accuracy=0.5572
+2025-05-02 13:20:07 INFO  - [i=1 fold=9] C=100 q=1 n=91 Accuracy=0.5219
+2025-05-02 13:20:09 INFO  - [i=1 fold=9] C=1000 q=1 n=91 Accuracy=0.5095
+2025-05-02 13:20:09 INFO  - [i=1 fold=9] BEST C=1000 q=8 n=18 # Test Acc: 0.6286
+2025-05-02 13:20:09 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:20:09 INFO  - [i=1 fold=10] Refined with q=8, n=18
+2025-05-02 13:20:09 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
+2025-05-02 13:20:09 INFO  - [i=1 fold=10] Refined with q=4, n=18
+2025-05-02 13:20:11 INFO  - [iteration 4] Q-error JUMPED! 3.000 # 4.000
+2025-05-02 13:20:11 INFO  - QSC DONE: color count: 35, max q-error=2.0, iterations=6
+2025-05-02 13:20:11 INFO  - [i=1 fold=10] Refined with q=2, n=35
+2025-05-02 13:20:11 INFO  - [iteration 2] Number of partitions: 40; Q-error: 3.0
+2025-05-02 13:20:16 INFO  - [iteration 9] Q-error JUMPED! 2.000 # 3.000
+2025-05-02 13:20:17 INFO  - QSC DONE: color count: 91, max q-error=1.0, iterations=11
+2025-05-02 13:20:17 INFO  - [i=1 fold=10] Refined with q=1, n=91
+2025-05-02 13:20:17 INFO  - [i=1 fold=10] C=0.001 q=8 n=18 Accuracy=0.5904
+2025-05-02 13:20:17 INFO  - [i=1 fold=10] C=0.01 q=8 n=18 Accuracy=0.5904
+2025-05-02 13:20:17 INFO  - [i=1 fold=10] C=0.1 q=8 n=18 Accuracy=0.5904
+2025-05-02 13:20:17 INFO  - [i=1 fold=10] C=1 q=8 n=18 Accuracy=0.5904
+2025-05-02 13:20:17 INFO  - [i=1 fold=10] C=10 q=8 n=18 Accuracy=0.6063
+2025-05-02 13:20:17 INFO  - [i=1 fold=10] C=100 q=8 n=18 Accuracy=0.6031
+2025-05-02 13:20:18 INFO  - [i=1 fold=10] C=1000 q=8 n=18 Accuracy=0.5968
+2025-05-02 13:20:18 INFO  - [i=1 fold=10] C=0.001 q=4 n=18 Accuracy=0.5904
+2025-05-02 13:20:18 INFO  - [i=1 fold=10] C=0.01 q=4 n=18 Accuracy=0.5904
+2025-05-02 13:20:18 INFO  - [i=1 fold=10] C=0.1 q=4 n=18 Accuracy=0.5904
+2025-05-02 13:20:18 INFO  - [i=1 fold=10] C=1 q=4 n=18 Accuracy=0.5904
+2025-05-02 13:20:19 INFO  - [i=1 fold=10] C=10 q=4 n=18 Accuracy=0.6063
+2025-05-02 13:20:19 INFO  - [i=1 fold=10] C=100 q=4 n=18 Accuracy=0.6031
+2025-05-02 13:20:19 INFO  - [i=1 fold=10] C=1000 q=4 n=18 Accuracy=0.5968
+2025-05-02 13:20:20 INFO  - [i=1 fold=10] C=0.001 q=2 n=35 Accuracy=0.5904
+2025-05-02 13:20:20 INFO  - [i=1 fold=10] C=0.01 q=2 n=35 Accuracy=0.5904
+2025-05-02 13:20:20 INFO  - [i=1 fold=10] C=0.1 q=2 n=35 Accuracy=0.5904
+2025-05-02 13:20:20 INFO  - [i=1 fold=10] C=1 q=2 n=35 Accuracy=0.5904
+2025-05-02 13:20:20 INFO  - [i=1 fold=10] C=10 q=2 n=35 Accuracy=0.5936
+2025-05-02 13:20:20 INFO  - [i=1 fold=10] C=100 q=2 n=35 Accuracy=0.5999
+2025-05-02 13:20:21 INFO  - [i=1 fold=10] C=1000 q=2 n=35 Accuracy=0.5871
+2025-05-02 13:20:21 INFO  - [i=1 fold=10] C=0.001 q=1 n=91 Accuracy=0.5904
+2025-05-02 13:20:21 INFO  - [i=1 fold=10] C=0.01 q=1 n=91 Accuracy=0.5904
+2025-05-02 13:20:21 INFO  - [i=1 fold=10] C=0.1 q=1 n=91 Accuracy=0.5904
+2025-05-02 13:20:21 INFO  - [i=1 fold=10] C=1 q=1 n=91 Accuracy=0.5872
+2025-05-02 13:20:21 INFO  - [i=1 fold=10] C=10 q=1 n=91 Accuracy=0.5649
+2025-05-02 13:20:21 INFO  - [i=1 fold=10] C=100 q=1 n=91 Accuracy=0.5338
+2025-05-02 13:20:22 INFO  - [i=1 fold=10] C=1000 q=1 n=91 Accuracy=0.5206
+2025-05-02 13:20:22 INFO  - [i=1 fold=10] BEST C=10 q=8 n=18 # Test Acc: 0.5882

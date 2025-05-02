@@ -251,14 +251,14 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
                 best_score = -1
                 best_params = None
                 cg = ColoredGraph(disjoint_graph.copy())
-                if has_edges:
-                    wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=1)
-                    wl.refine()
+                # if has_edges:
+                #     wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=1)
+                #     wl.refine()
 
                 q_n_features = {}
 
                 for q_val in q_grid_sorted:
-                    qsc = QuasiStableColoringGraph(cg, q=q_val, n_colors=n_max)
+                    qsc = QuasiStableColoringGraph(cg, q=q_val, n_colors=n_max, verbose=True)
                     qsc.refine()
                     n_val = len(qsc.partitions)
                     X = cg.generate_feature_matrix()

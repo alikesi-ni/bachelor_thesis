@@ -91,13 +91,24 @@ class QuasiStableColoringGraph:
     def pick_witness(self):
         m = len(self.partitions)
         errors = self.color_stats.errors_base[:m, :m]
-        witness = np.unravel_index(np.argmax(errors), errors.shape)
-        q_error = errors[witness]
-        witness_i, witness_j = witness[0], witness[1]
-        if (self.verbose):
+        max_error = np.max(errors)
+
+        # Find all (i,j) pairs with the same max error
+        max_error_indices = np.argwhere(errors == max_error)
+        num_max = len(max_error_indices)
+
+        if num_max > 1:
+            print(f"Number of witness candidates with max error ({max_error}): {num_max}")
+
+        # Pick just one as before
+        witness_i, witness_j = max_error_indices[0]
+        q_error = max_error
+
+        if self.verbose:
             print(f"Witness i: {self.partitions[witness_i]}")
             print(f"Witness j: {self.partitions[witness_j]}")
             print(f"Q-error: {q_error}")
+
         split_deg = np.mean(self.color_stats.neighbor[self.partitions[witness_i], witness_j].toarray())
         return witness_i, witness_j, split_deg, q_error
 
@@ -109,50 +120,61 @@ class QuasiStableColoringGraph:
             else:
                 retained.append(node_id)
 
-        assert retained and ejected
-
         if self.verbose:
             print(f"{self.partitions[witness_i]} split into {retained} and {ejected}")
+
+        assert retained and ejected
 
         self.partitions[witness_i] = retained
         self.partitions.append(ejected)
 
-    def update_stats_split(self, old, new):
-        old_nodes = self.partitions[old]
-        new_nodes = self.partitions[new]
+    def update_stats_partitions(self, partition_indices):
+        """
+        Update the statistics (upper_base, lower_base, errors_base, neighbor matrix, color stacks)
+        for the specified partitions.
 
-        rows, cols = self.color_stats.neighbor.shape
-        self.color_stats.neighbor.resize((rows, cols + 1))
-
-        old_degs = np.array(self.weights[:, old_nodes].sum(axis=1)).flatten()
-        new_degs = np.array(self.weights[:, new_nodes].sum(axis=1)).flatten()
-        self.color_stats.neighbor[:, old] = old_degs
-        self.color_stats.neighbor[:, new] = new_degs
-
+        partition_indices : list of partition indices to update
+        """
         m = len(self.partitions)
-        self.color_stats.upper_base[old, :m] = np.max(self.color_stats.neighbor[old_nodes, :], axis=0).toarray()
-        self.color_stats.lower_base[old, :m] = np.min(self.color_stats.neighbor[old_nodes, :], axis=0).toarray()
 
-        self.color_stats.upper_base[new, :m] = np.max(self.color_stats.neighbor[new_nodes, :], axis=0).toarray()
-        self.color_stats.lower_base[new, :m] = np.min(self.color_stats.neighbor[new_nodes, :], axis=0).toarray()
+        # Resize neighbor matrix if needed
+        rows, cols = self.color_stats.neighbor.shape
+        if cols < m:
+            self.color_stats.neighbor.resize((rows, m))
 
+        # 1️⃣ Update neighbor columns for changed partitions
+        for idx in partition_indices:
+            nodes = self.partitions[idx]
+            degs = np.array(self.weights[:, nodes].sum(axis=1)).flatten()
+            self.color_stats.neighbor[:, idx] = degs
+
+        # 2️⃣ Update upper and lower bounds for changed partitions (row-wise)
+        for idx in partition_indices:
+            nodes = self.partitions[idx]
+            self.color_stats.upper_base[idx, :m] = np.max(self.color_stats.neighbor[nodes, :], axis=0).toarray()
+            self.color_stats.lower_base[idx, :m] = np.min(self.color_stats.neighbor[nodes, :], axis=0).toarray()
+
+        # 3️⃣ Update upper and lower bounds for all partitions relative to changed ones (column-wise)
         for i, partition in enumerate(self.partitions):
-            self.color_stats.upper_base[i, old] = np.max(self.color_stats.neighbor[partition, old])
-            self.color_stats.lower_base[i, old] = np.min(self.color_stats.neighbor[partition, old])
-            self.color_stats.upper_base[i, new] = np.max(self.color_stats.neighbor[partition, new])
-            self.color_stats.lower_base[i, new] = np.min(self.color_stats.neighbor[partition, new])
+            for idx in partition_indices:
+                self.color_stats.upper_base[i, idx] = np.max(self.color_stats.neighbor[partition, idx])
+                self.color_stats.lower_base[i, idx] = np.min(self.color_stats.neighbor[partition, idx])
 
+        # 4️⃣ Update the error base
         if self.weighting:
             sizes = np.array([len(p) for p in self.partitions]).reshape(-1, 1)
             self.color_stats.errors_base[:m, :m] = (
-                self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m]
-            ) * sizes
+                                                           self.color_stats.upper_base[:m,
+                                                           :m] - self.color_stats.lower_base[:m, :m]
+                                                   ) * sizes
         else:
             self.color_stats.errors_base[:m, :m] = (
-                self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m]
+                    self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m]
             )
 
-        for partition in self.partitions:
+        # 5️⃣ Update color stacks for the changed partitions
+        for idx in partition_indices:
+            partition = self.partitions[idx]
             color_id = self.colored_graph.next_color_id
             for node in partition:
                 self.graph.nodes[node]["color-stack"].append(color_id)
@@ -177,26 +199,66 @@ class QuasiStableColoringGraph:
 
         q_error_before = np.inf
         q_error = np.inf
+        iteration = 0
         while len(self.partitions) < self.n_colors:
+            iteration+=1
             if len(self.partitions) == self.color_stats.n:
-                print(f"Limit of {self.color_stats.n} reached: Updated color stats size")
+                print(f"[iteration {iteration}] Limit of {self.color_stats.n} reached: Updated color stats size")
                 self.color_stats = self.color_stats.resize(self.color_stats.v, self.color_stats.n * 2)
 
-            witness_i, witness_j, split_deg, q_error = self.pick_witness()
+            m = len(self.partitions)
+            errors = self.color_stats.errors_base[:m, :m]
+            max_error = np.max(errors)
+
+            witness_indices = np.argwhere(errors == max_error)
+            if self.verbose:
+                print(f"[iteration {iteration}] Found {len(witness_indices)} witness pairs with q-error = {max_error}")
+
+            q_error = max_error
+
             if q_error > q_error_before:
-                self.logger.info(f"Q-error JUMPED! {q_error_before:.3f} # {q_error:.3f}")
+                self.logger.info(f"[iteration {iteration}] Q-error JUMPED! {q_error_before:.3f} # {q_error:.3f}")
             q_error_before = q_error
+
             if q_error <= self.q:
                 break
 
-            self.split_color(witness_i, witness_j, split_deg)
-            self.update_stats_split(witness_i, len(self.partitions) - 1)
+            # Collect for each witness_i the set of neighbor degrees toward different witness_j
+            split_data = defaultdict(list)
+
+            for witness_i, witness_j in witness_indices:
+                # Store neighbor degrees to later compute a combined split_deg
+                neighbor_degrees = self.color_stats.neighbor[self.partitions[witness_i], witness_j].toarray().flatten()
+                split_data[witness_i].append(neighbor_degrees)
+
+            # Prepare all splits
+            splits = {}
+
+            for witness_i, neighbor_degree_lists in split_data.items():
+                # Concatenate all neighbor degrees across different witness_j's
+                all_neighbor_degrees = np.concatenate(neighbor_degree_lists)
+
+                # Compute split degree — you could also use median instead of mean if more robust
+                split_deg = np.mean(all_neighbor_degrees)
+
+                splits[witness_i] = split_deg
+
+            for witness_i, witness_j in witness_indices:
+
+                split_deg = np.mean(
+                    self.color_stats.neighbor[self.partitions[witness_i], witness_j].toarray()
+                )
+
+                self.split_color(witness_i, witness_j, split_deg)
+                self.update_stats_partitions([witness_i, len(self.partitions) - 1])
+
+
             if self.verbose:
-                print(f"Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
+                print(f"[iteration {iteration}] Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
                 print("--------------------")
             if (len(self.partitions) % 10 == 0):
-                self.logger.info(f"Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
+                self.logger.info(f"[iteration {iteration}] Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
 
-        self.logger.info(f"QSC DONE: color count: {len(self.partitions)}, max q-error={q_error}")
+        self.logger.info(f"QSC DONE: color count: {len(self.partitions)}, max q-error={q_error}, iterations={iteration}")
 
         return self.partitions

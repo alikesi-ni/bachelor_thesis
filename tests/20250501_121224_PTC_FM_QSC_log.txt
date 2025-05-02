@@ -1,0 +1,16 @@
+2025-05-01 12:12:24 INFO  - Dataset: PTC_FM
+2025-05-01 12:12:24 INFO  - Algorithm: QSC
+2025-05-01 12:12:24 INFO  - Parameters: q_grid=[8, 4, 2, 1], n_max=512, c_grid=[0.001, 0.01, 0.1, 1, 10, 100, 1000], folds=10, repeats=1, start_repeat=1
+2025-05-01 12:12:24 INFO  - [i=1] Dataset: PTC_FM
+2025-05-01 12:12:57 INFO  - QSC DONE: color count: 191, max q-error=4.0
+2025-05-01 12:12:57 INFO  - [i=1 fold=1] Refined with q=8, n=191
+2025-05-01 12:12:57 INFO  - QSC DONE: color count: 191, max q-error=4.0
+2025-05-01 12:12:58 INFO  - [i=1 fold=1] Refined with q=4, n=191
+2025-05-01 12:13:01 INFO  - QSC DONE: color count: 198, max q-error=2.0
+2025-05-01 12:13:01 INFO  - [i=1 fold=1] Refined with q=2, n=198
+2025-05-01 12:13:03 INFO  - Number of partitions: 200; Q-error: 2.0
+2025-05-01 12:13:07 INFO  - Number of partitions: 210; Q-error: 2.0
+2025-05-01 12:13:12 INFO  - Number of partitions: 220; Q-error: 2.0
+2025-05-01 12:13:17 INFO  - Number of partitions: 230; Q-error: 2.0
+2025-05-01 12:13:22 INFO  - Number of partitions: 240; Q-error: 2.0
+2025-05-01 12:13:27 INFO  - Number of partitions: 250; Q-error: 2.0

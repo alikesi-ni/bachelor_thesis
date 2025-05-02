@@ -88,46 +88,6 @@ class QuasiStableColoringGraph:
                 self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m]
             )
 
-    def pick_witness(self):
-        m = len(self.partitions)
-        errors = self.color_stats.errors_base[:m, :m]
-        max_error = np.max(errors)
-
-        # Find all (i,j) pairs with the same max error
-        max_error_indices = np.argwhere(errors == max_error)
-        num_max = len(max_error_indices)
-
-        if num_max > 1:
-            print(f"Number of witness candidates with max error ({max_error}): {num_max}")
-
-        # Pick just one as before
-        witness_i, witness_j = max_error_indices[0]
-        q_error = max_error
-
-        if self.verbose:
-            print(f"Witness i: {self.partitions[witness_i]}")
-            print(f"Witness j: {self.partitions[witness_j]}")
-            print(f"Q-error: {q_error}")
-
-        split_deg = np.mean(self.color_stats.neighbor[self.partitions[witness_i], witness_j].toarray())
-        return witness_i, witness_j, split_deg, q_error
-
-    def split_color(self, witness_i, witness_j, threshold):
-        retained, ejected = [], []
-        for node_id in self.partitions[witness_i]:
-            if self.color_stats.neighbor[node_id, witness_j] > threshold:
-                ejected.append(node_id)
-            else:
-                retained.append(node_id)
-
-        if self.verbose:
-            print(f"{self.partitions[witness_i]} split into {retained} and {ejected}")
-
-        assert retained and ejected
-
-        self.partitions[witness_i] = retained
-        self.partitions.append(ejected)
-
     def update_stats_partitions(self, partitions_to_be_updated):
         """
         Update the statistics (upper_base, lower_base, errors_base, neighbor matrix, color stacks)
@@ -148,9 +108,9 @@ class QuasiStableColoringGraph:
 
         # 3️⃣ Update upper and lower bounds for all partitions relative to changed ones (column-wise)
         for i, partition in enumerate(self.partitions):
-            for partition in partitions_to_be_updated:
-                self.color_stats.upper_base[i, partition] = np.max(self.color_stats.neighbor[partition, partition])
-                self.color_stats.lower_base[i, partition] = np.min(self.color_stats.neighbor[partition, partition])
+            for partition_to_be_updated in partitions_to_be_updated:
+                self.color_stats.upper_base[i, partition_to_be_updated] = np.max(self.color_stats.neighbor[partition, partition_to_be_updated])
+                self.color_stats.lower_base[i, partition_to_be_updated] = np.min(self.color_stats.neighbor[partition, partition_to_be_updated])
 
         # 4️⃣ Update the error base
         if self.weighting:
@@ -196,7 +156,7 @@ class QuasiStableColoringGraph:
 
             witness_pairs = np.argwhere(errors == max_error)
             if self.verbose:
-                print(f"[iteration {iteration}] Found {len(witness_pairs)} witness pairs with q-error = {max_error}")
+                self.logger.info(f"[iteration {iteration}] Found {len(witness_pairs)} witness pairs with q-error = {max_error}")
 
             q_error = max_error
 
@@ -251,7 +211,7 @@ class QuasiStableColoringGraph:
             m = len(self.partitions)
             rows, cols = self.color_stats.neighbor.shape
             if self.color_stats.n < m:
-                print(f"[iteration {iteration}] Limit of {self.color_stats.n} reached: Updated color stats size")
+                self.logger.info(f"[iteration {iteration}] Limit of {self.color_stats.n} reached: Updated color stats size")
                 new_n = 1 if m == 0 else 2**(m - 1).bit_length()
                 self.color_stats = self.color_stats.resize(self.color_stats.v, new_n)
             if cols < m:
@@ -261,10 +221,8 @@ class QuasiStableColoringGraph:
 
 
             if self.verbose:
-                print(f"[iteration {iteration}] Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
-                print("--------------------")
-            if (len(self.partitions) % 10 == 0):
-                self.logger.info(f"[iteration {iteration}] Number of partitions: {len(self.partitions)}; Q-error: {q_error}")
+                self.logger.info(f"[iteration {iteration}] Number of partitions: {len(self.partitions)}")
+                self.logger.info("--------------------")
 
         self.logger.info(f"QSC DONE: color count: {len(self.partitions)}, max q-error={q_error}, iterations={iteration}")
 

@@ -1,11 +1,10 @@
-import logging
 from collections import defaultdict
 import networkx as nx
 import numpy as np
 from scipy.sparse import csr_array, hstack
 
 from thesis.colored_graph.colored_graph import ColoredGraph
-from thesis.utils.logger_config import setup_logger, LoggerFactory
+from thesis.utils.logger_config import LoggerFactory
 
 
 class ColorStats:

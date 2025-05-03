@@ -3,8 +3,8 @@ import pickle
 
 import networkx as nx
 
-from graph_dataset import GraphDataset
-from gwl import GradualWeisfeilerLeman
+from GWL_python.graph_dataset.graph_dataset import GraphDataset
+from GWL_python.gwl.gwl import GradualWeisfeilerLeman
 
 
 def generate_feature_vectors(dataset: GraphDataset, gwl_params: dict, fv_dir: str) -> None:

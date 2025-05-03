@@ -9,6 +9,7 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold
 
+from GWL_python.graph_dataset.graph_dataset import GraphDataset
 from GWL_python.kernels.gwl_subtree import GWLSubtreeKernel
 
 from GWL_python.evaluation.utils import *
@@ -60,7 +61,7 @@ class EvaluationNestedCV:
 
         for model_params in model_param_grid:
 
-            inner_cv = StratifiedKFold(n_splits=inner_folds, shuffle=True)
+            inner_cv = StratifiedKFold(n_splits=inner_folds, shuffle=True, random_state=1234)
 
             accuracies = list()
 
@@ -122,8 +123,9 @@ class EvaluationNestedCV:
             os.mkdir(main_dir)
 
         # load GraphDataset instance
-        with open(os.path.join(dataset_dir, dataset_name), mode="rb") as pickled_data:
-            dataset: GraphDataset = pickle.load(pickled_data)
+        # with open(os.path.join(dataset_dir, dataset_name), mode="rb") as pickled_data:
+        #     dataset: GraphDataset = pickle.load(pickled_data)
+        dataset = GraphDataset("../data", dataset_name)
 
         graph_id_label_mapping: dict = dataset.get_graphs_labels()
 
@@ -132,9 +134,9 @@ class EvaluationNestedCV:
 
         # define search spaces
         gwl_search_space = {
-            "refinement-steps": tuple(range(11)),
-            "num-clusters": tuple([2 ** i for i in range(1, 5)]),
-            "cluster-init-method": ("kmeans++", "forgy")
+            "refinement-steps": (4,),
+            "num-clusters": (3,),
+            "cluster-init-method": ("forgy",)
         }
         gwl_permuted_search_space = [dict(zip(gwl_search_space.keys(), elem)) for elem in
                                      itertools.product(*gwl_search_space.values())]

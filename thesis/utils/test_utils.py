@@ -10,6 +10,7 @@ from typing import Dict
 import networkx as nx
 import numpy as np
 import pandas as pd
+from scipy.sparse import save_npz
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import StratifiedKFold
@@ -109,7 +110,9 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
 
 def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
                     dataset_name="DATASET", folds=10, logging=True, repeats=1, start_repeat=1):
+
     from datetime import datetime
+    import csv
 
     sorted_map = dict(sorted(graph_id_label_map.items()))
     gids = np.array(list(sorted_map.keys()))
@@ -133,67 +136,90 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
         writer_train.writerow(["i", "fold", "C", "h", "k", "accuracy"])
         writer_test.writerow(["i", "fold", "C", "h", "k", "accuracy"])
 
+        # ========================
+        # (1) Precompute ALL feature matrices for all h, k
+        # ========================
+        feature_matrices = dict()
+        logger.info("Generating feature matrices for all (h, k) combinations...")
+
+        for h in h_grid:
+            for k in k_grid:
+                cg = ColoredGraph(disjoint_graph.copy())
+                gwl = GWLColoringGraph(cg, refinement_steps=h, n_cluster=k)
+                gwl.refine()
+
+                X = cg.generate_feature_matrix()
+                feature_matrices[(h, k)] = X
+                logger.info(f"Feature matrix computed for h={h}, k={k}, shape={X.shape}")
+
+        logger.info("Finished generating all feature matrices.")
+
+        # ========================
+        # (2) Outer CV + Inner CV
+        # ========================
         for i in range(start_repeat, repeats + 1):
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=i)
-            logger.info(f"[i={i}] Dataset: {dataset_name}")
+            logger.info(f"[Repeat {i}] Starting outer CV...")
 
             for fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
                 best_score = -1
                 best_params = None
 
-                for h in h_grid:
-                    for k in k_grid:
-                        cg = ColoredGraph(disjoint_graph.copy())
-                        start = time.time()
-                        gwl = GWLColoringGraph(cg, refinement_steps=h, n_cluster=k)
-                        gwl.refine()
-                        end = time.time()
-                        logger.info(f"[i={i} fold={fold}] h={h}, k={k} # GWL time: {end - start:.4f}s")
+                logger.info(f"[Repeat {i} Fold {fold}] Starting inner CV for hyperparameter tuning...")
 
-                        start = time.time()
-                        X = cg.generate_feature_matrix()
-                        end = time.time()
-                        logger.info(f"[i={i} fold={fold}] X.shape={X.shape} generated in {end - start:.4f}s")
+                for (h, k), X in feature_matrices.items():
+                    X_train = X[train_idx]
+                    y_train = y[train_idx]
 
-                        X_train = X[train_idx]
-                        y_train = y[train_idx]
+                    inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=0)
 
-                        inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=0)
-                        for C in c_grid:
-                            inner_scores = []
-                            for ti, vi in inner_cv.split(X_train, y_train):
-                                K_train = cosine_similarity(X_train[ti], X_train[ti])
-                                K_val = cosine_similarity(X_train[vi], X_train[ti])
-                                clf = SVC(kernel="precomputed", C=C)
-                                clf.fit(K_train, y_train[ti])
-                                preds = clf.predict(K_val)
-                                inner_scores.append(accuracy_score(y_train[vi], preds))
+                    for C in c_grid:
+                        inner_scores = []
 
-                            avg_score = np.mean(inner_scores)
-                            writer_train.writerow([i, fold, C, h, k, avg_score])
-                            f_train.flush()
-                            logger.info(f"[i={i} fold={fold}] C={C}, h={h}, k={k} Accuracy={avg_score:.4f}")
+                        for ti, vi in inner_cv.split(X_train, y_train):
+                            K_train = cosine_similarity(X_train[ti], X_train[ti])
+                            K_val = cosine_similarity(X_train[vi], X_train[ti])
 
-                            if avg_score > best_score:
-                                best_score = avg_score
-                                best_params = (h, k, C)
+                            clf = SVC(kernel="precomputed", C=C)
+                            clf.fit(K_train, y_train[ti])
+                            preds = clf.predict(K_val)
 
-                # Final evaluation with best h, k, C
+                            acc = accuracy_score(y_train[vi], preds)
+                            inner_scores.append(acc)
+
+                        avg_score = np.mean(inner_scores)
+                        writer_train.writerow([i, fold, C, h, k, avg_score])
+                        f_train.flush()
+
+                        logger.info(f"[Repeat {i} Fold {fold}] C={C}, h={h}, k={k} Inner CV Accuracy={avg_score:.4f}")
+
+                        if avg_score > best_score:
+                            best_score = avg_score
+                            best_params = (h, k, C)
+
+                # ========================
+                # (3) Final outer fold testing with best params
+                # ========================
                 h_best, k_best, C_best = best_params
-                cg = ColoredGraph(disjoint_graph.copy())
-                gwl = GWLColoringGraph(cg, refinement_steps=h_best, n_cluster=k_best)
-                gwl.refine()
-                X = cg.generate_feature_matrix()
+                X = feature_matrices[(h_best, k_best)]
 
                 K_train = cosine_similarity(X[train_idx], X[train_idx])
                 K_test = cosine_similarity(X[test_idx], X[train_idx])
+
                 clf = SVC(kernel="precomputed", C=C_best)
                 clf.fit(K_train, y[train_idx])
                 preds = clf.predict(K_test)
+
                 acc = accuracy_score(y[test_idx], preds)
+
                 writer_test.writerow([i, fold, C_best, h_best, k_best, acc])
                 f_test.flush()
-                logger.info(f"[i={i} fold={fold}] BEST C={C_best}, h={h_best}, k={k_best} # Test Acc: {acc:.4f}")
+
+                logger.info(f"[Repeat {i} Fold {fold}] BEST C={C_best}, h={h_best}, k={k_best} Outer CV Accuracy={acc:.4f}")
+
+    logger.info("Evaluation complete.")
+
+
 
 
 def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
@@ -330,3 +356,62 @@ def summarize_repeat_results(test_filename: str, per_repeat: bool = True):
     print(f"Standard deviation across repeats: {overall_std:.4f}")
 
     return overall_mean, overall_std
+
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+from sklearn.metrics.pairwise import cosine_similarity
+
+def evaluate_gwl_simple(disjoint_graph, graph_id_label_map, h, k, C,
+                        test_size=0.3, random_state=42, dataset_name="DATASET", logging=True):
+    """
+    Simple single train/test split evaluation for GWL.
+    Mirrors example.py style evaluation.
+    """
+    from datetime import datetime
+
+    sorted_map = dict(sorted(graph_id_label_map.items()))
+    gids = np.array(list(sorted_map.keys()))
+    y = np.array(list(sorted_map.values()))
+
+    np.savez("../tests/split_parameter_simple.npz",
+             graph_ids=gids,
+             graph_labels=y)
+
+    # Split data
+    train_ids, test_ids, y_train, y_test = train_test_split(
+        gids, y, test_size=0.2, random_state=42, stratify=y
+    )
+
+    np.savez("splits_simple.npz",
+             train_ids=train_ids,
+             test_ids=test_ids,
+             y_train=y_train,
+             y_test=y_test)
+
+    # Color the graph
+    cg = ColoredGraph(disjoint_graph.copy())
+    gwl = GWLColoringGraph(cg, refinement_steps=h, n_cluster=k)
+    gwl.refine()
+
+    # Feature matrix
+    X = cg.generate_feature_matrix()
+    save_npz("my_gwl_simple.npz", X)
+
+    # Precomputed kernel
+    K_train = cosine_similarity(X[train_ids], X[train_ids])
+    K_test = cosine_similarity(X[test_ids], X[train_ids])
+
+    # Train and evaluate SVM
+    clf = SVC(kernel="precomputed", C=C)
+    clf.fit(K_train, y_train)
+    preds = clf.predict(K_test)
+    acc = accuracy_score(y_test, preds)
+
+    if logging:
+        print(f"Dataset: {dataset_name}")
+        print(f"h={h}, k={k}, C={C}")
+        print(f"Accuracy: {acc:.4f}")
+
+    return acc
+

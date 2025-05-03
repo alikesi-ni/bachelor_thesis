@@ -18,7 +18,7 @@ from sklearn.svm import SVC
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.gwl_coloring import GWLColoringGraph
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
-from thesis.utils.logger_config import setup_logger
+from thesis.utils.logger_config import LoggerFactory
 from thesis.utils.other_utils import has_distinct_edge_labels, convert_to_feature_matrix, has_distinct_node_labels
 from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoringGraph
 
@@ -37,17 +37,11 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
     test_filename = f"{timestamp}_{dataset_name}_{refinement_method}_test.csv"
     log_filename = f"{timestamp}_{dataset_name}_{refinement_method}_log.txt"
 
-    logger = setup_logger(__name__, log_filename) if logging else None
+    logger = LoggerFactory.get_full_logger(__name__, log_filename) if logging else LoggerFactory.get_console_logger(__name__, "error")
 
-    def log(msg):
-        if logging:
-            logger.info(msg)
-        else:
-            print(msg)
-
-    log(f"Dataset: {dataset_name}: NO EDGE LABELS")
-    log("Algorithm: WLST")
-    log(f"Parameters: h_grid={h_grid}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
+    logger.info(f"Dataset: {dataset_name}: NO EDGE LABELS")
+    logger.info("Algorithm: WLST")
+    logger.info(f"Parameters: h_grid={h_grid}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
 
     with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
         writer_train = csv.writer(f_train)
@@ -57,7 +51,7 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
 
         for i in range(start_repeat, repeats + 1):
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=i)
-            log(f"[i={i}] Dataset: {dataset_name}")
+            logger.info(f"[i={i}] Dataset: {dataset_name}")
             for fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
                 best_score = -1
                 best_params = None
@@ -68,12 +62,12 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                     wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h)
                     wl.refine()
                     end = time.time()
-                    log(f"[i={i} fold={fold}] h={h} WL time: {end - start:.4f}s")
+                    logger.info(f"[i={i} fold={fold}] h={h} WL time: {end - start:.4f}s")
 
                     start = time.time()
                     X = cg.generate_feature_matrix()
                     end = time.time()
-                    log(f"[i={i} fold={fold}] X.shape={X.shape} generated in {end - start:.4f}s")
+                    logger.info(f"[i={i} fold={fold}] X.shape={X.shape} generated in {end - start:.4f}s")
 
                     X_train = X[train_idx]
                     y_train = y[train_idx]
@@ -92,7 +86,7 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                         avg_score = np.mean(inner_scores)
                         writer_train.writerow([i, fold, C, h, avg_score])
                         f_train.flush()
-                        log(f"[i={i} fold={fold}] C={C} h={h} Accuracy={avg_score:.4f}")
+                        logger.info(f"[i={i} fold={fold}] C={C} h={h} Accuracy={avg_score:.4f}")
                         if avg_score > best_score:
                             best_score = avg_score
                             best_params = (h, C)
@@ -111,7 +105,7 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                 acc = accuracy_score(y[test_idx], preds)
                 writer_test.writerow([i, fold, C_best, h_best, acc])
                 f_test.flush()
-                log(f"[i={i} fold={fold}] BEST C={C_best}, h={h_best} # Test Acc: {acc:.4f}")
+                logger.info(f"[i={i} fold={fold}] BEST C={C_best}, h={h_best} # Test Acc: {acc:.4f}")
 
 def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
                     dataset_name="DATASET", folds=10, logging=True, repeats=1, start_repeat=1):
@@ -127,17 +121,11 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
     test_filename = f"{timestamp}_{dataset_name}_{refinement_method}_test.csv"
     log_filename = f"{timestamp}_{dataset_name}_{refinement_method}_log.txt"
 
-    logger = setup_logger(log_filename) if logging else None
+    logger = LoggerFactory.get_full_logger(__name__, log_filename) if logging else LoggerFactory.get_console_logger(__name__, "error")
 
-    def log(msg):
-        if logging:
-            logger.info(msg)
-        else:
-            print(msg)
-
-    log(f"Dataset: {dataset_name}")
-    log("Algorithm: GWL")
-    log(f"Parameters: h_grid={h_grid}, k_grid={k_grid}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
+    logger.info(f"Dataset: {dataset_name}")
+    logger.info("Algorithm: GWL")
+    logger.info(f"Parameters: h_grid={h_grid}, k_grid={k_grid}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
 
     with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
         writer_train = csv.writer(f_train)
@@ -147,7 +135,7 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
 
         for i in range(start_repeat, repeats + 1):
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=i)
-            log(f"[i={i}] Dataset: {dataset_name}")
+            logger.info(f"[i={i}] Dataset: {dataset_name}")
 
             for fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
                 best_score = -1
@@ -160,12 +148,12 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
                         gwl = GWLColoringGraph(cg, refinement_steps=h, n_cluster=k)
                         gwl.refine()
                         end = time.time()
-                        log(f"[i={i} fold={fold}] h={h}, k={k} # GWL time: {end - start:.4f}s")
+                        logger.info(f"[i={i} fold={fold}] h={h}, k={k} # GWL time: {end - start:.4f}s")
 
                         start = time.time()
                         X = cg.generate_feature_matrix()
                         end = time.time()
-                        log(f"[i={i} fold={fold}] X.shape={X.shape} generated in {end - start:.4f}s")
+                        logger.info(f"[i={i} fold={fold}] X.shape={X.shape} generated in {end - start:.4f}s")
 
                         X_train = X[train_idx]
                         y_train = y[train_idx]
@@ -184,7 +172,7 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
                             avg_score = np.mean(inner_scores)
                             writer_train.writerow([i, fold, C, h, k, avg_score])
                             f_train.flush()
-                            log(f"[i={i} fold={fold}] C={C}, h={h}, k={k} Accuracy={avg_score:.4f}")
+                            logger.info(f"[i={i} fold={fold}] C={C}, h={h}, k={k} Accuracy={avg_score:.4f}")
 
                             if avg_score > best_score:
                                 best_score = avg_score
@@ -205,7 +193,7 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
                 acc = accuracy_score(y[test_idx], preds)
                 writer_test.writerow([i, fold, C_best, h_best, k_best, acc])
                 f_test.flush()
-                log(f"[i={i} fold={fold}] BEST C={C_best}, h={h_best}, k={k_best} # Test Acc: {acc:.4f}")
+                logger.info(f"[i={i} fold={fold}] BEST C={C_best}, h={h_best}, k={k_best} # Test Acc: {acc:.4f}")
 
 
 def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
@@ -220,17 +208,11 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
     test_filename = f"{timestamp}_{dataset_name}_{refinement_method}_test.csv"
     log_filename = f"{timestamp}_{dataset_name}_{refinement_method}_log.txt"
 
-    logger = setup_logger(__name__, log_filename) if logging else None
+    logger = LoggerFactory.get_full_logger(__name__, log_filename) if logging else LoggerFactory.get_console_logger(__name__, "error")
 
-    def log(msg):
-        if logging:
-            logger.info(msg)
-        else:
-            print(msg)
-
-    log(f"Dataset: {dataset_name}")
-    log("Algorithm: QSC")
-    log(f"Parameters: q_grid={q_grid}, n_max={n_max}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
+    logger.info(f"Dataset: {dataset_name}")
+    logger.info("Algorithm: QSC")
+    logger.info(f"Parameters: q_grid={q_grid}, n_max={n_max}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
 
     has_edges = has_distinct_edge_labels(disjoint_graph)
     has_nodes = has_distinct_node_labels(disjoint_graph)
@@ -245,7 +227,7 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
 
         for i in range(start_repeat, repeats + 1):
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=i)
-            log(f"[i={i}] Dataset: {dataset_name}")
+            logger.info(f"[i={i}] Dataset: {dataset_name}")
 
             for fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
                 best_score = -1
@@ -258,12 +240,12 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
                 q_n_features = {}
 
                 for q_val in q_grid_sorted:
-                    qsc = QuasiStableColoringGraph(cg, q=q_val, n_colors=n_max, verbose=True)
+                    qsc = QuasiStableColoringGraph(cg, q=q_val, n_colors=n_max, verbose=True, q_tolerance=0.0, logger=logger)
                     qsc.refine()
                     n_val = len(qsc.partitions)
                     X = cg.generate_feature_matrix()
                     q_n_features[(q_val, n_val)] = X
-                    log(f"[i={i} fold={fold}] Refined with q={q_val}, n={n_val}")
+                    logger.info(f"[i={i} fold={fold}] Refined with q={q_val}, n={n_val}")
                     if n_val == n_max:
                         break
 
@@ -286,7 +268,7 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
                         avg_score = np.mean(inner_scores)
                         writer_train.writerow([i, fold, C, q_val, n_val, avg_score])
                         f_train.flush()
-                        log(f"[i={i} fold={fold}] C={C} q={q_val} n={n_val} Accuracy={avg_score:.4f}")
+                        logger.info(f"[i={i} fold={fold}] C={C} q={q_val} n={n_val} Accuracy={avg_score:.4f}")
 
                         if avg_score > best_score:
                             best_score = avg_score
@@ -303,7 +285,7 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
                 acc = accuracy_score(y[test_idx], preds)
                 writer_test.writerow([i, fold, C_best, q_best, n_best, acc])
                 f_test.flush()
-                log(f"[i={i} fold={fold}] BEST C={C_best} q={q_best} n={n_best} # Test Acc: {acc:.4f}")
+                logger.info(f"[i={i} fold={fold}] BEST C={C_best} q={q_best} n={n_best} # Test Acc: {acc:.4f}")
 
                 # Save the last qsc for inspection
                 # base_name = f"{timestamp}_{dataset_name}_i{i}_fold{fold}_q{q_best}_n{n_best}"

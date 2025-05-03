@@ -3,6 +3,8 @@ data
 plots
 tests/results/*.csv
 tests/results/*.txt
+tests/*.csv
+tests/*.txt
 
 # Ignore Python bytecode and cache files
 __pycache__/

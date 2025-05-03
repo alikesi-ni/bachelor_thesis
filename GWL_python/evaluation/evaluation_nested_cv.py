@@ -9,9 +9,9 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold
 
-from kernels import GWLSubtreeKernel
+from GWL_python.kernels.gwl_subtree import GWLSubtreeKernel
 
-from evaluation.utils import *
+from GWL_python.evaluation.utils import *
 
 
 class EvaluationNestedCV:

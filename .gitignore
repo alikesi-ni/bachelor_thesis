@@ -6,8 +6,7 @@ tests/results/*.txt
 tests/*.csv
 tests/*.txt
 *.npz
-*-Evaluation-[0-9]*/
-*-Evaluation-Serial-[0-9]*/
+*-Evaluation-*[0-9]*/
 
 # Ignore Python bytecode and cache files
 __pycache__/

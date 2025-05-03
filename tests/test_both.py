@@ -9,10 +9,10 @@ dataset_names = [
     # "PTC_FM"
     # "KKI",
     # "ENZYMES",
-    # "MSRC_9",
+    "MSRC_9",
     # "IMDB-BINARY",
     # "REDDIT-BINARY",
-    "EGO-2"
+    # "EGO-2"
     # "EGO-3",
     # "DD",
     # "EGO-4"
@@ -40,12 +40,12 @@ for dataset_name in dataset_names:
 
     c_grid = [10**i for i in range(-3, 4)]  # SVM C ∈ {1e-3 to 1e3}
 
-    evaluate_quasistable_cv(
-        disjoint_graph, graph_id_label_map, q_grid, n_max, c_grid, folds=10, dataset_name=dataset_name, repeats=1, start_repeat=1
-    )
-
-    # evaluate_wl_cv(
-    #     disjoint_graph, graph_id_label_map, h_grid, c_grid, folds=10, dataset_name=dataset_name, repeats=5, start_repeat=1
+    # evaluate_quasistable_cv(
+    #     disjoint_graph, graph_id_label_map, q_grid, n_max, c_grid, folds=10, dataset_name=dataset_name, repeats=1, start_repeat=1
     # )
+
+    evaluate_wl_cv(
+        disjoint_graph, graph_id_label_map, h_grid, c_grid, folds=10, dataset_name=dataset_name, repeats=1, start_repeat=1
+    )
     #
     # evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid, dataset_name=dataset_name, folds=10, repeats=5, start_repeat=1)

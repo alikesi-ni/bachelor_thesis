@@ -1,126 +1,139 @@
-import csv
-import logging
-import pickle
-import sys
+import itertools
 from datetime import datetime
-import time
-
-from typing import Dict
-
-import networkx as nx
+import os
+import pickle
 import numpy as np
 import pandas as pd
 from scipy.sparse import save_npz
-from sklearn.metrics import accuracy_score
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.model_selection import StratifiedKFold
-from sklearn.svm import SVC
 
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.gwl_coloring import GWLColoringGraph
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
 from thesis.utils.logger_config import LoggerFactory
-from thesis.utils.other_utils import has_distinct_edge_labels, convert_to_feature_matrix, has_distinct_node_labels
+from thesis.utils.other_utils import has_distinct_edge_labels, has_distinct_node_labels
 from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoringGraph
-
+import csv
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.metrics.pairwise import cosine_similarity
 
 def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                    dataset_name="DATASET", folds=10, logging=True, repeats=1, start_repeat=1):
-    from datetime import datetime
 
     sorted_map = dict(sorted(graph_id_label_map.items()))
     gids = np.array(list(sorted_map.keys()))
     y = np.array(list(sorted_map.values()))
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     refinement_method = "WL"
+    main_dir = f"{dataset_name}-Evaluation-Manual-{timestamp}"
+    os.makedirs(main_dir, exist_ok=True)
 
-    train_filename = f"{timestamp}_{dataset_name}_{refinement_method}_train.csv"
-    test_filename = f"{timestamp}_{dataset_name}_{refinement_method}_test.csv"
-    log_filename = f"{timestamp}_{dataset_name}_{refinement_method}_log.txt"
+    # Output files
+    train_filename = os.path.join(main_dir, "train_results.csv")
+    test_filename = os.path.join(main_dir, "test_results.csv")
+    log_filename = os.path.join(main_dir, "evaluation_log.txt")
 
     logger = LoggerFactory.get_full_logger(__name__, log_filename) if logging else LoggerFactory.get_console_logger(__name__, "error")
-
-    logger.info(f"Dataset: {dataset_name}: NO EDGE LABELS")
+    logger.info(f"Dataset: {dataset_name}")
     logger.info("Algorithm: WLST")
-    logger.info(f"Parameters: h_grid={h_grid}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
+
+    #### 1️⃣ Precompute feature vectors ####
+
+    fv_dir = os.path.join(main_dir, "feature_vectors")
+    os.makedirs(fv_dir, exist_ok=True)
+
+    for h in h_grid:
+        fv_file = os.path.join(fv_dir, f"h-{h}")
+        if not os.path.exists(fv_file):
+            logger.info(f"Computing feature vector for h={h}...")
+            cg = ColoredGraph(disjoint_graph.copy())
+            wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h)
+            wl.refine()
+            X = cg.generate_feature_matrix()
+            with open(fv_file, "wb") as f:
+                pickle.dump(X, f)
+
+    #### 2️⃣ Cross-validation ####
 
     with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
-        writer_train = csv.writer(f_train)
-        writer_test = csv.writer(f_test)
-        writer_train.writerow(["i", "fold", "C", "h", "accuracy"])
-        writer_test.writerow(["i", "fold", "C", "h", "accuracy"])
+        writer_train = csv.writer(f_train, delimiter=";")
+        writer_test = csv.writer(f_test, delimiter=";")
+        writer_train.writerow(["Trial", "Outer Fold", "C", "h", "Inner Accuracy"])
+        writer_test.writerow(["Trial", "Outer Fold", "C", "h", "Outer Test Accuracy"])
 
-        for i in range(start_repeat, repeats + 1):
-            outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=i)
-            logger.info(f"[i={i}] Dataset: {dataset_name}")
-            for fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
+        for trial in range(start_repeat, repeats + 1):
+            outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1234)
+            logger.info(f"[Trial {trial}] Starting outer cross-validation")
+
+            for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
+                x_train, y_train = gids[train_idx], y[train_idx]
+                x_test, y_test = gids[test_idx], y[test_idx]
+
+                #### Inner CV — hyperparameter search ####
                 best_score = -1
                 best_params = None
 
                 for h in h_grid:
-                    cg = ColoredGraph(disjoint_graph.copy())
-                    start = time.time()
-                    wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h)
-                    wl.refine()
-                    end = time.time()
-                    logger.info(f"[i={i} fold={fold}] h={h} WL time: {end - start:.4f}s")
+                    fv_file = os.path.join(fv_dir, f"h-{h}")
+                    with open(fv_file, "rb") as f:
+                        feature_vectors = pickle.load(f)
 
-                    start = time.time()
-                    X = cg.generate_feature_matrix()
-                    end = time.time()
-                    logger.info(f"[i={i} fold={fold}] X.shape={X.shape} generated in {end - start:.4f}s")
-
-                    X_train = X[train_idx]
-                    y_train = y[train_idx]
-
-                    inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=0)
                     for C in c_grid:
-                        inner_scores = []
-                        for ti, vi in inner_cv.split(X_train, y_train):
-                            K_train = cosine_similarity(X_train[ti], X_train[ti])
-                            K_val = cosine_similarity(X_train[vi], X_train[ti])
-                            clf = SVC(kernel="precomputed", C=C)
-                            clf.fit(K_train, y_train[ti])
-                            preds = clf.predict(K_val)
-                            inner_scores.append(accuracy_score(y_train[vi], preds))
 
-                        avg_score = np.mean(inner_scores)
-                        writer_train.writerow([i, fold, C, h, avg_score])
+                        inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1234)
+                        inner_accuracies = []
+
+                        for inner_train_idx, inner_val_idx in inner_cv.split(x_train, y_train):
+                            x_inner_train = x_train[inner_train_idx]
+                            y_inner_train = y_train[inner_train_idx]
+                            x_val = x_train[inner_val_idx]
+                            y_val = y_train[inner_val_idx]
+
+                            K_train = cosine_similarity(feature_vectors[x_inner_train], feature_vectors[x_inner_train])
+                            K_val = cosine_similarity(feature_vectors[x_val], feature_vectors[x_inner_train])
+
+                            model = SVC(kernel="precomputed", C=C)
+                            model.fit(K_train, y_inner_train)
+                            y_pred = model.predict(K_val)
+                            acc = accuracy_score(y_val, y_pred) * 100
+                            inner_accuracies.append(acc)
+
+                        avg_inner_acc = np.mean(inner_accuracies)
+                        writer_train.writerow([trial, outer_fold, C, h, avg_inner_acc])
                         f_train.flush()
-                        logger.info(f"[i={i} fold={fold}] C={C} h={h} Accuracy={avg_score:.4f}")
-                        if avg_score > best_score:
-                            best_score = avg_score
+
+                        logger.info(f"[Trial {trial} Fold {outer_fold}] h={h} C={C} Avg Inner Acc={avg_inner_acc:.2f}")
+
+                        if avg_inner_acc > best_score:
+                            best_score = avg_inner_acc
                             best_params = (h, C)
 
+                #### Outer fold test ####
                 h_best, C_best = best_params
-                cg = ColoredGraph(disjoint_graph.copy())
-                wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h_best)
-                wl.refine()
-                X = cg.generate_feature_matrix()
 
-                K_train = cosine_similarity(X[train_idx], X[train_idx])
-                K_test = cosine_similarity(X[test_idx], X[train_idx])
-                clf = SVC(kernel="precomputed", C=C_best)
-                clf.fit(K_train, y[train_idx])
-                preds = clf.predict(K_test)
-                acc = accuracy_score(y[test_idx], preds)
-                writer_test.writerow([i, fold, C_best, h_best, acc])
+                fv_file = os.path.join(fv_dir, f"h-{h_best}")
+                with open(fv_file, "rb") as f:
+                    feature_vectors = pickle.load(f)
+
+                K_train = cosine_similarity(feature_vectors[x_train], feature_vectors[x_train])
+                K_test = cosine_similarity(feature_vectors[x_test], feature_vectors[x_train])
+
+                model = SVC(kernel="precomputed", C=C_best)
+                model.fit(K_train, y_train)
+                y_pred = model.predict(K_test)
+                outer_acc = accuracy_score(y_test, y_pred) * 100
+
+                writer_test.writerow([trial, outer_fold, C_best, h_best, outer_acc])
                 f_test.flush()
-                logger.info(f"[i={i} fold={fold}] BEST C={C_best}, h={h_best} # Test Acc: {acc:.4f}")
+
+                logger.info(f"[Trial {trial} Fold {outer_fold}] Outer Test Acc={outer_acc:.2f}")
+
+    logger.info("Evaluation complete.")
 
 def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
                     dataset_name="DATASET", folds=10, logging=True, repeats=1, start_repeat=1):
-
-    import os
-    import pickle
-    import itertools
-    from datetime import datetime
-    import csv
-    import numpy as np
-    from sklearn.svm import SVC
-    from sklearn.metrics import accuracy_score
-    from sklearn.model_selection import StratifiedKFold
-    from sklearn.metrics.pairwise import cosine_similarity
 
     sorted_map = dict(sorted(graph_id_label_map.items()))
     gids = np.array(list(sorted_map.keys()))
@@ -191,7 +204,7 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
 
             outer_fold_accuracies = []
 
-            for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y)):
+            for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
                 x_train, y_train = gids[train_idx], y[train_idx]
                 x_test, y_test = gids[test_idx], y[test_idx]
 
@@ -274,9 +287,6 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
     logger.info("Evaluation complete.")
 
 
-
-
-
 def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
                              q_grid, n_max, c_grid, dataset_name="DATASET", folds=10, logging=True, repeats=10, start_repeat=1):
     sorted_map = dict(sorted(graph_id_label_map.items()))
@@ -321,7 +331,7 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
                 q_n_features = {}
 
                 for q_val in q_grid_sorted:
-                    qsc = QuasiStableColoringGraph(cg, q=q_val, n_colors=n_max, verbose=True, q_tolerance=0.0, logger=logger)
+                    qsc = QuasiStableColoringGraph(cg, q=q_val, n_colors=n_max, q_tolerance=0.0, logger=logger)
                     qsc.refine()
                     n_val = len(qsc.partitions)
                     X = cg.generate_feature_matrix()
@@ -411,11 +421,6 @@ def summarize_repeat_results(test_filename: str, per_repeat: bool = True):
     print(f"Standard deviation across repeats: {overall_std:.4f}")
 
     return overall_mean, overall_std
-
-from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score
-from sklearn.metrics.pairwise import cosine_similarity
 
 def evaluate_gwl_simple(disjoint_graph, graph_id_label_map, h, k, C,
                         test_size=0.3, random_state=42, dataset_name="DATASET", logging=True):

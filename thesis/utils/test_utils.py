@@ -288,10 +288,10 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
 
 
 def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
-                             q_grid, n_max, c_grid, dataset_name="DATASET", folds=10, logging=True, repeats=10, start_repeat=1):
+                             q_grid, n_max, q_tolerance_grid, c_grid, dataset_name="DATASET", folds=10, logging=True, repeats=10, start_repeat=1):
     sorted_map = dict(sorted(graph_id_label_map.items()))
-    gids = np.array(list(sorted_map.keys()))
-    y = np.array(list(sorted_map.values()))
+    graph_ids = np.array(list(sorted_map.keys()))
+    graph_labels = np.array(list(sorted_map.values()))
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     refinement_method = "QSC"
 
@@ -303,7 +303,7 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
 
     logger.info(f"Dataset: {dataset_name}")
     logger.info("Algorithm: QSC")
-    logger.info(f"Parameters: q_grid={q_grid}, n_max={n_max}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
+    logger.info(f"Parameters: q_grid={q_grid}, n_max={n_max}, q_tolerance_grid={q_tolerance_grid}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
 
     has_edges = has_distinct_edge_labels(disjoint_graph)
     has_nodes = has_distinct_node_labels(disjoint_graph)
@@ -311,8 +311,8 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
     with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
         writer_train = csv.writer(f_train)
         writer_test = csv.writer(f_test)
-        writer_train.writerow(["i", "fold", "C", "q", "n", "accuracy"])
-        writer_test.writerow(["i", "fold", "C", "q", "n", "accuracy"])
+        writer_train.writerow(["i", "fold", "C", "q", "q_tolerance", "n", "accuracy"])
+        writer_test.writerow(["i", "fold", "C", "q", "q_tolerance", "n", "accuracy"])
 
         q_grid_sorted = sorted(q_grid, reverse=True)
 
@@ -320,30 +320,30 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=i)
             logger.info(f"[i={i}] Dataset: {dataset_name}")
 
-            for fold, (train_idx, test_idx) in enumerate(outer_cv.split(gids, y), 1):
+            for fold, (train_idx, test_idx) in enumerate(outer_cv.split(graph_ids, graph_labels), 1):
                 best_score = -1
                 best_params = None
                 cg = ColoredGraph(disjoint_graph.copy())
-                # if has_edges:
-                #     wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=1)
-                #     wl.refine()
 
                 q_n_features = {}
 
-                for q_val in q_grid_sorted:
-                    qsc = QuasiStableColoringGraph(cg, q=q_val, n_colors=n_max, q_tolerance=0.0, logger=logger)
-                    qsc.refine()
-                    n_val = len(qsc.partitions)
-                    X = cg.generate_feature_matrix()
-                    q_n_features[(q_val, n_val)] = X
-                    logger.info(f"[i={i} fold={fold}] Refined with q={q_val}, n={n_val}")
-                    if n_val == n_max:
-                        break
+                for q_tolerance in q_tolerance_grid:
+                    for q_val in q_grid_sorted:
+                        qsc = QuasiStableColoringGraph(
+                            cg, q=q_val, n_colors=n_max, q_tolerance=q_tolerance, logger=logger
+                        )
+                        qsc.refine()
+                        n_val = len(qsc.partitions)
+                        X = cg.generate_feature_matrix()
+                        q_n_features[(q_val, q_tolerance, n_val)] = X
+                        logger.info(f"[i={i} fold={fold}] Refined with q={q_val}, q_tolerance={q_tolerance}, n={n_val}")
+                        if n_val == n_max:
+                            break  # stop further refinements if max colors reached
 
                 # Train and validate SVMs
-                for (q_val, n_val), X in q_n_features.items():
+                for (q_val, q_tol, n_val), X in q_n_features.items():
                     X_train = X[train_idx]
-                    y_train = y[train_idx]
+                    y_train = graph_labels[train_idx]
 
                     inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=0)
                     for C in c_grid:
@@ -357,32 +357,32 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
                             inner_scores.append(accuracy_score(y_train[vi], preds))
 
                         avg_score = np.mean(inner_scores)
-                        writer_train.writerow([i, fold, C, q_val, n_val, avg_score])
+                        writer_train.writerow([i, fold, C, q_val, q_tol, n_val, avg_score])
                         f_train.flush()
-                        logger.info(f"[i={i} fold={fold}] C={C} q={q_val} n={n_val} Accuracy={avg_score:.4f}")
+                        logger.info(
+                            f"[i={i} fold={fold}] C={C} q={q_val} q_tolerance={q_tol} n={n_val} Accuracy={avg_score:.4f}"
+                        )
 
                         if avg_score > best_score:
                             best_score = avg_score
-                            best_params = (q_val, n_val, C)
+                            best_params = (q_val, q_tol, n_val, C)
 
                 # Final test
-                q_best, n_best, C_best = best_params
-                X = q_n_features[(q_best, n_best)]
+                q_best, q_tol_best, n_best, C_best = best_params
+                X = q_n_features[(q_best, q_tol_best, n_best)]
                 K_train = cosine_similarity(X[train_idx], X[train_idx])
                 K_test = cosine_similarity(X[test_idx], X[train_idx])
                 clf = SVC(kernel="precomputed", C=C_best)
-                clf.fit(K_train, y[train_idx])
+                clf.fit(K_train, graph_labels[train_idx])
                 preds = clf.predict(K_test)
-                acc = accuracy_score(y[test_idx], preds)
-                writer_test.writerow([i, fold, C_best, q_best, n_best, acc])
+                acc = accuracy_score(graph_labels[test_idx], preds)
+                writer_test.writerow([i, fold, C_best, q_best, q_tol_best, n_best, acc])
                 f_test.flush()
-                logger.info(f"[i={i} fold={fold}] BEST C={C_best} q={q_best} n={n_best} # Test Acc: {acc:.4f}")
 
-                # Save the last qsc for inspection
-                # base_name = f"{timestamp}_{dataset_name}_i{i}_fold{fold}_q{q_best}_n{n_best}"
-                # with open(f"{base_name}_qsc.pkl", "wb") as f_qsc:
-                #     pickle.dump(qsc, f_qsc)
-                # log(f"[i={i} fold={fold}] Saved QSC to {base_name}_qsc.pkl")
+                logger.info(
+                    f"[i={i} fold={fold}] BEST C={C_best} q={q_best} q_tolerance={q_tol_best} n={n_best} # Test Acc: {acc:.4f}"
+                )
+
 
 def summarize_repeat_results(test_filename: str, per_repeat: bool = True):
     """

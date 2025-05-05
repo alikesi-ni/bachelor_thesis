@@ -34,12 +34,12 @@ for dataset_name in dataset_names:
     graph_id_label_map = {g.graph["graph_id"]: g.graph["graph_label"] for g in graphs}
 
     # h_grid = list(range(1, 11))
-    h_grid = range(1, 2)
+    h_grid = range(1, 11)
     k_grid = [2, 4, 8, 16]
     q_grid = [2**i for i in range(3, -1, -1)] + [0]
     n_max = 1024
 
-    refinement_steps_grid = range(1, 2)
+    refinement_steps_grid = h_grid
 
     c_grid = [10**i for i in range(-3, 4)]  # SVM C ∈ {1e-3 to 1e3}
 

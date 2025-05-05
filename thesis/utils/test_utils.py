@@ -52,6 +52,7 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
             wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h)
             wl.refine()
             X = cg.generate_feature_matrix()
+            logger.info(f"Dimension of feature vector for h={h} is {X.shape[1] - 1}")
             with open(fv_file, "wb") as f:
                 pickle.dump(X, f)
 
@@ -64,7 +65,7 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
         writer_test.writerow(["Trial", "Outer Fold", "C", "h", "Outer Test Accuracy"])
 
         for trial in range(start_repeat, repeats + 1):
-            outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1234)
+            outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=trial)
             logger.info(f"[Trial {trial}] Starting outer cross-validation")
 
             for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(graph_ids, graph_labels), 1):
@@ -78,11 +79,11 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                 for h in h_grid:
                     fv_file = os.path.join(fv_dir, f"h-{h}")
                     with open(fv_file, "rb") as f:
-                        feature_vectors = pickle.load(f)
+                        fv_matrix = pickle.load(f)
 
                     for C in c_grid:
 
-                        inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1234)
+                        inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=0)
                         inner_accuracies = []
 
                         for inner_train_idx, inner_val_idx in inner_cv.split(x_train, y_train):
@@ -91,8 +92,8 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                             x_val = x_train[inner_val_idx]
                             y_val = y_train[inner_val_idx]
 
-                            K_train = cosine_similarity(feature_vectors[x_inner_train], feature_vectors[x_inner_train])
-                            K_val = cosine_similarity(feature_vectors[x_val], feature_vectors[x_inner_train])
+                            K_train = cosine_similarity(fv_matrix[x_inner_train], fv_matrix[x_inner_train])
+                            K_val = cosine_similarity(fv_matrix[x_val], fv_matrix[x_inner_train])
 
                             model = SVC(kernel="precomputed", C=C)
                             model.fit(K_train, y_inner_train)
@@ -115,10 +116,10 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
 
                 fv_file = os.path.join(fv_dir, f"h-{h_best}")
                 with open(fv_file, "rb") as f:
-                    feature_vectors = pickle.load(f)
+                    fv_matrix = pickle.load(f)
 
-                K_train = cosine_similarity(feature_vectors[x_train], feature_vectors[x_train])
-                K_test = cosine_similarity(feature_vectors[x_test], feature_vectors[x_train])
+                K_train = cosine_similarity(fv_matrix[x_train], fv_matrix[x_train])
+                K_test = cosine_similarity(fv_matrix[x_test], fv_matrix[x_train])
 
                 model = SVC(kernel="precomputed", C=C_best)
                 model.fit(K_train, y_train)
@@ -295,6 +296,7 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
     sorted_map = dict(sorted(graph_id_label_map.items()))
     graph_ids = np.array(list(sorted_map.keys()))
     graph_labels = np.array(list(sorted_map.values()))
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     refinement_method = "QSC"
 
@@ -312,133 +314,150 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
     logger.info("Algorithm: QSC")
     logger.info(f"Parameters: refinement_steps_grid={refinement_steps_grid}, c_grid={c_grid}, folds={folds}, repeats={repeats}, start_repeat={start_repeat}")
 
-    #### Feature vector cache ####
+    #### 1️⃣ Precompute feature vectors ####
     fv_dir = os.path.join(main_dir, "feature_vectors")
     os.makedirs(fv_dir, exist_ok=True)
 
-    refinement_steps_grid_sorted = sorted(refinement_steps_grid)
+    refinement_steps_grid = sorted(refinement_steps_grid)
+    cg = ColoredGraph(disjoint_graph.copy())
+    qsc = QuasiStableColoringGraph(cg, q=0.0, n_colors=np.inf, q_tolerance=0.0, logger=logger)
 
-    #### CSV Headers ####
+    logger.info(f"Computing feature vector for refinement_step={0}...")
+    fv_matrix = cg.generate_feature_matrix()
+    logger.info(f"Dimension of feature vector for refinement_step={0} is {fv_matrix.shape[1] - 1}")
+    params = {
+        "n_colors": len(qsc.partitions),
+        "refinement_steps": 0,
+        "q_error": np.inf
+    }
+
+
+    fv_filename = f"step_{0}.pkl"
+    fv_path = os.path.join(fv_dir, fv_filename)
+
+    with open(fv_path, "wb") as f:
+        pickle.dump((fv_matrix, params), f)
+
+    saved_steps = set()
+
+    max_requested_step = max(refinement_steps_grid)
+    while qsc.refinement_step < max_requested_step:
+        n_colors, refinement_step, q_error = qsc.refine_one_step()
+
+        if refinement_step in refinement_steps_grid and refinement_step not in saved_steps:
+            fv_filename = f"step_{refinement_step}.pkl"
+            fv_path = os.path.join(fv_dir, fv_filename)
+
+            logger.info(f"Computing feature vector for refinement_step={refinement_step}...")
+            fv_matrix = cg.generate_feature_matrix()
+            logger.info(f"Dimension of feature vector for refinement_step={refinement_step} is {fv_matrix.shape[1] - 1}")
+            params = {
+                "n_colors": len(qsc.partitions),
+                "refinement_steps": refinement_step,
+                "q_error": q_error
+            }
+
+            with open(fv_path, "wb") as f:
+                pickle.dump((fv_matrix, params), f)
+
+            saved_steps.add(refinement_step)
+
+            logger.info(f"Saved feature vector for step={refinement_step} "
+                        f"(n_colors={params['n_colors']}, q_error={q_error:.4f})")
+
+        if qsc.q_error == 0.0:
+            logger.info("Q-error reached 0.0 — stopping further refinement.")
+            break
+
+    #### 2️⃣ Cross-validation ####
     with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
         writer_train = csv.writer(f_train)
         writer_test = csv.writer(f_test)
 
-        writer_train.writerow(["trial", "fold", "C", "refinement_step", "inner_accuracy", "n_colors", "q_error"])
-        writer_test.writerow(["trial", "fold", "C", "refinement_step", "outer_accuracy", "n_colors", "q_error"])
+        writer_train.writerow(["Trial", "Fold", "C", "step", "accuracy", "n_colors", "q_error"])
+        writer_test.writerow(["Trial", "Fold", "C", "step", "accuracy", "n_colors", "q_error"])
 
         for trial in range(start_repeat, repeats + 1):
-            outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1234)
+            outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=trial)
             logger.info(f"[Trial {trial}] Starting outer cross-validation")
 
-            for fold, (train_idx, test_idx) in enumerate(outer_cv.split(graph_ids, graph_labels), 1):
+            for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(graph_ids, graph_labels), 1):
+                x_train, y_train = graph_ids[train_idx], graph_labels[train_idx]
+                x_test, y_test = graph_ids[test_idx], graph_labels[test_idx]
+
+                #### Inner CV — hyperparameter search ####
                 best_score = -1
                 best_params = None
 
-                #### 1️⃣ Generate feature vectors for required refinement steps ####
-                step_features = {}
+                for step in refinement_steps_grid:
+                    fv_filename = f"step_{step}.pkl"
+                    fv_path = os.path.join(fv_dir, fv_filename)
 
-                cg = ColoredGraph(disjoint_graph.copy())
-                qsc = QuasiStableColoringGraph(
-                    cg,
-                    q=np.inf,  # q is irrelevant when only iterating
-                    n_colors=np.inf,
-                    q_tolerance=0.0,
-                    logger=logger
-                )
+                    if not os.path.exists(fv_path):
+                        logger.warning(f"Feature vector for step={step} not found, skipping.")
+                        continue
 
-                remaining_steps = refinement_steps_grid_sorted
-
-                while remaining_steps:
-                    # One refinement step at a time
-                    n_colors, refinement_step, q_error = qsc.refine_one_step()
-                    refinement_step = remaining_steps[0]
-
-                    if refinement_step in remaining_steps:
-                        fv_filename = f"refstep_{refinement_step}_fold_{fold}_trial_{trial}.pkl"
-                        fv_path = os.path.join(fv_dir, fv_filename)
-
-                        if os.path.exists(fv_path):
-                            logger.info(f"[Trial {trial} Fold {fold}] Loading cached feature vector for refinement step {refinement_step}")
-                            with open(fv_path, "rb") as f:
-                                X, params_info = pickle.load(f)
-                        else:
-                            X = cg.generate_feature_matrix()
-
-                            params_info = {
-                                "n_colors": n_colors,
-                                "q_error": q_error,
-                                "refinement_step": refinement_step
-                            }
-
-                            with open(fv_path, "wb") as f:
-                                pickle.dump((X, params_info), f)
-
-                            logger.info(f"[Trial {trial} Fold {fold}] Saved feature vector at refinement step={refinement_step}, "
-                                        f"n_colors={n_colors}, q_error={q_error:.4f}")
-
-                        step_features[refinement_step] = (X, params_info)
-                        remaining_steps.remove(refinement_step)
-
-                    # If q-error is zero, stop early
-                    if q_error == 0.0:
-                        logger.info(f"[Trial {trial} Fold {fold}] Q-error reached zero at refinement step {refinement_step}. Stopping further refinements.")
-                        break
-
-                #### 2️⃣ Inner CV for hyperparameter selection ####
-
-                for refinement_step, (X, params_info) in step_features.items():
-                    X_train = X[train_idx]
-                    y_train = graph_labels[train_idx]
-
-                    inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1234)
+                    with open(fv_path, "rb") as f:
+                        fv_matrix, params = pickle.load(f)
 
                     for C in c_grid:
-                        inner_scores = []
-                        for ti, vi in inner_cv.split(X_train, y_train):
-                            K_train = cosine_similarity(X_train[ti], X_train[ti])
-                            K_val = cosine_similarity(X_train[vi], X_train[ti])
-                            clf = SVC(kernel="precomputed", C=C)
-                            clf.fit(K_train, y_train[ti])
-                            preds = clf.predict(K_val)
-                            inner_scores.append(accuracy_score(y_train[vi], preds))
 
-                        avg_score = np.mean(inner_scores)
-                        writer_train.writerow([
-                            trial, fold, C, refinement_step, avg_score,
-                            params_info["n_colors"], params_info["q_error"]
-                        ])
+                        inner_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=0)
+                        inner_accuracies = []
+
+                        for inner_train_idx, inner_val_idx in inner_cv.split(x_train, y_train):
+                            x_inner_train = x_train[inner_train_idx]
+                            y_inner_train = y_train[inner_train_idx]
+                            x_val = x_train[inner_val_idx]
+                            y_val = y_train[inner_val_idx]
+
+                            K_train = cosine_similarity(fv_matrix[x_inner_train], fv_matrix[x_inner_train])
+                            K_val = cosine_similarity(fv_matrix[x_val], fv_matrix[x_inner_train])
+
+                            model = SVC(kernel="precomputed", C=C)
+                            model.fit(K_train, y_inner_train)
+                            y_pred = model.predict(K_val)
+                            outer_acc = accuracy_score(y_val, y_pred) * 100
+                            inner_accuracies.append(outer_acc)
+
+                        avg_inner_acc = np.mean(inner_accuracies)
+                        writer_train.writerow([trial, outer_fold, C, step, avg_inner_acc, params['n_colors'], params['q_error']])
                         f_train.flush()
 
-                        logger.info(f"[Trial {trial} Fold {fold}] C={C} Step={refinement_step} Avg Inner Acc={avg_score:.4f} "
-                                    f"(n_colors={params_info['n_colors']}, q_error={params_info['q_error']:.4f})")
+                        logger.info(f"[Trial {trial} Fold {outer_fold}] step={step} C={C}  Avg Inner Acc={avg_inner_acc:.4f}")
 
-                        if avg_score > best_score:
-                            best_score = avg_score
-                            best_params = (refinement_step, C, params_info)
+                        if avg_inner_acc > best_score:
+                            best_score = avg_inner_acc
+                            best_params = (step, C, params)
 
-                #### 3️⃣ Outer Test ####
+                #### Outer fold test ####
+                if best_params is None:
+                    logger.warning(f"No valid parameter combination found for Trial {trial} Fold {outer_fold}. Skipping.")
+                    continue
 
-                best_step, C_best, params_info = best_params
-                X, _ = step_features[best_step]
+                step_best, C_best, params_best = best_params
 
-                K_train = cosine_similarity(X[train_idx], X[train_idx])
-                K_test = cosine_similarity(X[test_idx], X[train_idx])
+                fv_filename = f"step_{step_best}.pkl"
+                fv_path = os.path.join(fv_dir, fv_filename)
 
-                clf = SVC(kernel="precomputed", C=C_best)
-                clf.fit(K_train, graph_labels[train_idx])
-                preds = clf.predict(K_test)
-                acc = accuracy_score(graph_labels[test_idx], preds)
+                with open(fv_path, "rb") as f:
+                    fv_matrix, _ = pickle.load(f)
 
-                writer_test.writerow([
-                    trial, fold, C_best, best_step, acc,
-                    params_info["n_colors"], params_info["q_error"]
-                ])
+                K_train = cosine_similarity(fv_matrix[x_train], fv_matrix[x_train])
+                K_test = cosine_similarity(fv_matrix[x_test], fv_matrix[x_train])
+
+                model = SVC(kernel="precomputed", C=C_best)
+                model.fit(K_train, y_train)
+                y_pred = model.predict(K_test)
+                outer_acc = accuracy_score(y_test, y_pred) * 100
+
+                writer_test.writerow([trial, outer_fold, C_best, step_best, outer_acc, params_best['n_colors'], params_best['q_error']])
                 f_test.flush()
 
-                logger.info(f"[Trial {trial} Fold {fold}] BEST C={C_best} Step={best_step} Outer Test Acc={acc:.4f} "
-                            f"(n_colors={params_info['n_colors']}, q_error={params_info['q_error']:.4f})")
+                logger.info(f"[Trial {trial} Fold {outer_fold}] BEST C={C_best} step={step_best} Outer Test Acc={outer_acc:.4f} "
+                            f"(n_colors={params_best['n_colors']}, q_error={params_best['q_error']:.4f})")
 
-
+    logger.info("Evaluation complete.")
 
 def summarize_repeat_results(test_filename: str, per_repeat: bool = True):
     """

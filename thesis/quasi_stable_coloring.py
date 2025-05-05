@@ -50,6 +50,7 @@ class QuasiStableColoringGraph:
 
         self.__assert_nodes_start_from_zero()
         self.is_set_up = False
+        self.__set_up()
 
     def __assert_nodes_start_from_zero(self):
         nodes = list(self.graph.nodes)
@@ -113,28 +114,16 @@ class QuasiStableColoringGraph:
         else:
             self.color_stats.errors_base[:m, :m] = (self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m])
 
-        for partition in partitions_to_be_updated:
-            partition_nodes = self.partitions[partition]
+        for partition in self.partitions:
             color_id = self.colored_graph.next_color_id
-            for node in partition_nodes:
+            for node in partition:
                 self.graph.nodes[node]["color-stack"].append(color_id)
             self.colored_graph.next_color_id += 1
 
         self.colored_graph.color_stack_height += 1
 
     def refine(self):
-        self.partitions = []
-
-        color_groups = defaultdict(list)
-        for node, color_stack in nx.get_node_attributes(self.graph, "color-stack").items():
-            color = color_stack[-1]
-            color_groups[color].append(node)
-
-        self.partitions = list(color_groups.values())
-
-        self.weights = nx.adjacency_matrix(self.graph, nodelist=sorted(self.graph.nodes), dtype=np.float64)
-        self.color_stats = ColorStats(len(self.graph), max(len(self.partitions), int(min(self.n_colors, 128))))
-        self.update_stats()
+        self.__set_up()
 
         while len(self.partitions) < self.n_colors and self.refinement_step < self.refinement_steps:
             self.q_error_before = self.q_error

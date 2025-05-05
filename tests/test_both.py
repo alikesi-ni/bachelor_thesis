@@ -1,9 +1,12 @@
+import os
+
 import networkx as nx
 import numpy as np
 
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.utils.read_data_utils import dataset_to_graphs
-from thesis.utils.test_utils import evaluate_quasistable_cv, evaluate_wl_cv, evaluate_gwl_cv
+from thesis.utils.test_utils import evaluate_quasistable_cv, evaluate_wl_cv, evaluate_gwl_cv, \
+    get_stats_from_test_results_csv
 
 dataset_names = [
     # "PTC_FM"
@@ -43,9 +46,13 @@ for dataset_name in dataset_names:
 
     c_grid = [10**i for i in range(-3, 4)]  # SVM C ∈ {1e-3 to 1e3}
 
-    evaluate_quasistable_cv(
-        disjoint_graph, graph_id_label_map, refinement_steps_grid=refinement_steps_grid, c_grid=c_grid, folds=10, dataset_name=dataset_name, repeats=1, start_repeat=1
-    )
+    # evaluate_quasistable_cv(
+    #     disjoint_graph, graph_id_label_map, refinement_steps_grid=refinement_steps_grid, c_grid=c_grid, folds=10, dataset_name=dataset_name, repeats=10, start_repeat=1
+    # )
+
+    res_dir = "../tests/MSRC_9-Evaluation-QSC-20250505_210237"
+
+    get_stats_from_test_results_csv(os.path.join(res_dir, "test_results.csv"))
 
     # evaluate_wl_cv(
     #     disjoint_graph, graph_id_label_map, h_grid, c_grid, folds=10, dataset_name=dataset_name, repeats=1, start_repeat=1

@@ -112,7 +112,7 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
     for step in range(max_step + 1):
         if step == 0:
             fv_matrix = cg.generate_feature_matrix()
-            n_colors = len(set([c[-1] for _, c in nx.get_node_attributes(cg.graph, "color-stack").items()]))
+            n_colors = cg.get_num_colors()
         else:
             n_colors, current_step = wl.refine_one_step()
             fv_matrix = cg.generate_feature_matrix()

@@ -80,13 +80,14 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     refinement_method = "WL"
-    main_dir = f"{dataset_name}-Evaluation-Manual-{timestamp}"
+    main_dir = f"{dataset_name}-Evaluation-WL-{timestamp}"
     os.makedirs(main_dir, exist_ok=True)
 
     # Output files
     train_filename = os.path.join(main_dir, "train_results.csv")
     test_filename = os.path.join(main_dir, "test_results.csv")
     log_filename = os.path.join(main_dir, "evaluation_log.txt")
+    refinement_filename = os.path.join(main_dir, "refinement_results.csv")
 
     logger = LoggerFactory.get_full_logger(__name__, log_filename) if logging else LoggerFactory.get_console_logger(__name__, "error")
     logger.info(f"Dataset: {dataset_name}")
@@ -97,25 +98,46 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
     fv_dir = os.path.join(main_dir, "feature_vectors")
     os.makedirs(fv_dir, exist_ok=True)
 
-    for h in h_grid:
-        fv_file = os.path.join(fv_dir, f"h-{h}")
-        if not os.path.exists(fv_file):
-            logger.info(f"Computing feature vector for h={h}...")
-            cg = ColoredGraph(disjoint_graph.copy())
-            wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=h)
-            wl.refine()
-            X = cg.generate_feature_matrix()
-            logger.info(f"Dimension of feature vector for h={h} is {X.shape[1] - 1}")
-            with open(fv_file, "wb") as f:
-                pickle.dump(X, f)
+    refinement_results = []
+
+    # Prepare refinement_steps_grid
+    h_grid = sorted(h_grid)
+    max_step = max(h_grid)
+
+    cg = ColoredGraph(disjoint_graph.copy())
+    wl = WeisfeilerLemanColoringGraph(cg)
+
+    saved_steps = set()
+
+    for step in range(max_step + 1):
+        if step == 0:
+            fv_matrix = cg.generate_feature_matrix()
+            n_colors = len(set([c[-1] for _, c in nx.get_node_attributes(cg.graph, "color-stack").items()]))
+        else:
+            n_colors, current_step = wl.refine_one_step()
+            fv_matrix = cg.generate_feature_matrix()
+
+        feature_dim = fv_matrix.shape[1] - 1
+
+        if step in h_grid:
+            fv_filename = os.path.join(fv_dir, f"step_{step}.pkl")
+            with open(fv_filename, "wb") as f:
+                pickle.dump((fv_matrix, {"step": step, "feature_dim": feature_dim, "n_colors": n_colors}), f)
+            logger.info(f"Saved feature vector for step={step} (feature_dim={feature_dim}, n_colors={n_colors})")
+            saved_steps.add(step)
+
+        refinement_results.append({"step": step, "feature_dim": feature_dim, "n_colors": n_colors})
+
+    # Write refinement_results.csv
+    pd.DataFrame(refinement_results).to_csv(refinement_filename, index=False)
 
     #### 2️⃣ Cross-validation ####
 
     with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
         writer_train = csv.writer(f_train, delimiter=";")
         writer_test = csv.writer(f_test, delimiter=";")
-        writer_train.writerow(["Trial", "Outer Fold", "C", "h", "Inner Accuracy"])
-        writer_test.writerow(["Trial", "Outer Fold", "C", "h", "Outer Test Accuracy"])
+        writer_train.writerow(["Trial", "Outer Fold", "C", "step", "Inner Accuracy", "n_colors"])
+        writer_test.writerow(["Trial", "Outer Fold", "C", "step", "Outer Test Accuracy", "n_colors"])
 
         for trial in range(start_repeat, repeats + 1):
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=trial)
@@ -129,10 +151,10 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                 best_score = -1
                 best_params = None
 
-                for h in h_grid:
-                    fv_file = os.path.join(fv_dir, f"h-{h}")
-                    with open(fv_file, "rb") as f:
-                        fv_matrix = pickle.load(f)
+                for step in h_grid:
+                    fv_filename = os.path.join(fv_dir, f"step_{step}.pkl")
+                    with open(fv_filename, "rb") as f:
+                        fv_matrix, params = pickle.load(f)
 
                     for C in c_grid:
 
@@ -155,21 +177,21 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                             inner_accuracies.append(acc)
 
                         avg_inner_acc = np.mean(inner_accuracies)
-                        writer_train.writerow([trial, outer_fold, C, h, avg_inner_acc])
+                        writer_train.writerow([trial, outer_fold, C, step, avg_inner_acc, params["n_colors"]])
                         f_train.flush()
 
-                        logger.info(f"[Trial {trial} Fold {outer_fold}] h={h} C={C} Avg Inner Acc={avg_inner_acc:.2f}")
+                        logger.info(f"[Trial {trial} Fold {outer_fold}] step={step} C={C} Avg Inner Acc={avg_inner_acc:.2f}")
 
                         if avg_inner_acc > best_score:
                             best_score = avg_inner_acc
-                            best_params = (h, C)
+                            best_params = (step, C, params["n_colors"])
 
                 #### Outer fold test ####
-                h_best, C_best = best_params
+                step_best, C_best, n_colors_best = best_params
 
-                fv_file = os.path.join(fv_dir, f"h-{h_best}")
-                with open(fv_file, "rb") as f:
-                    fv_matrix = pickle.load(f)
+                fv_filename = os.path.join(fv_dir, f"step_{step_best}.pkl")
+                with open(fv_filename, "rb") as f:
+                    fv_matrix, _ = pickle.load(f)
 
                 K_train = cosine_similarity(fv_matrix[x_train], fv_matrix[x_train])
                 K_test = cosine_similarity(fv_matrix[x_test], fv_matrix[x_train])
@@ -179,12 +201,13 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                 y_pred = model.predict(K_test)
                 outer_acc = accuracy_score(y_test, y_pred) * 100
 
-                writer_test.writerow([trial, outer_fold, C_best, h_best, outer_acc])
+                writer_test.writerow([trial, outer_fold, C_best, step_best, outer_acc, n_colors_best])
                 f_test.flush()
 
-                logger.info(f"[Trial {trial} Fold {outer_fold}] Outer Test Acc={outer_acc:.2f}")
+                logger.info(f"[Trial {trial} Fold {outer_fold}] BEST C={C_best} step={step_best} Outer Test Acc={outer_acc:.2f}")
 
     logger.info("Evaluation complete.")
+
 
 def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
                     dataset_name="DATASET", folds=10, logging=True, repeats=1, start_repeat=1):

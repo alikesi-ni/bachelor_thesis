@@ -107,8 +107,6 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
     cg = ColoredGraph(disjoint_graph.copy())
     wl = WeisfeilerLemanColoringGraph(cg)
 
-    saved_steps = set()
-
     for step in range(max_step + 1):
         if step == 0:
             fv_matrix = cg.generate_feature_matrix()
@@ -119,14 +117,17 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
 
         feature_dim = fv_matrix.shape[1] - 1
 
-        if step in h_grid:
-            fv_filename = os.path.join(fv_dir, f"step_{step}.pkl")
-            with open(fv_filename, "wb") as f:
-                pickle.dump((fv_matrix, {"step": step, "feature_dim": feature_dim, "n_colors": n_colors}), f)
-            logger.info(f"Saved feature vector for step={step} (feature_dim={feature_dim}, n_colors={n_colors})")
-            saved_steps.add(step)
+        fv_filename = os.path.join(fv_dir, f"step_{step}.pkl")
+        with open(fv_filename, "wb") as f:
+            pickle.dump((fv_matrix, {"step": step, "feature_dim": feature_dim, "n_colors": n_colors}), f)
+        logger.info(f"Saved feature vector for step={step} (feature_dim={feature_dim}, n_colors={n_colors})")
 
         refinement_results.append({"step": step, "feature_dim": feature_dim, "n_colors": n_colors})
+
+        # 🔥 Stop if stable
+        if wl.is_stable:
+            logger.info(f"Refinement stabilized at step={step} with n_colors={n_colors}. No further refinement.")
+            break
 
     # Write refinement_results.csv
     pd.DataFrame(refinement_results).to_csv(refinement_filename, index=False)
@@ -136,12 +137,12 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
     with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
         writer_train = csv.writer(f_train, delimiter=";")
         writer_test = csv.writer(f_test, delimiter=";")
-        writer_train.writerow(["Trial", "Outer Fold", "C", "step", "Inner Accuracy", "n_colors"])
-        writer_test.writerow(["Trial", "Outer Fold", "C", "step", "Outer Test Accuracy", "n_colors"])
+        writer_train.writerow(["trial", "Outer fold", "C", "step", "Inner Accuracy", "n_colors"])
+        writer_test.writerow(["trial", "Outer fold", "C", "step", "Outer Test Accuracy", "n_colors"])
 
         for trial in range(start_repeat, repeats + 1):
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=trial)
-            logger.info(f"[Trial {trial}] Starting outer cross-validation")
+            logger.info(f"[trial {trial}] Starting outer cross-validation")
 
             for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(graph_ids, graph_labels), 1):
                 x_train, y_train = graph_ids[train_idx], graph_labels[train_idx]
@@ -180,7 +181,7 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                         writer_train.writerow([trial, outer_fold, C, step, avg_inner_acc, params["n_colors"]])
                         f_train.flush()
 
-                        logger.info(f"[Trial {trial} Fold {outer_fold}] step={step} C={C} Avg Inner Acc={avg_inner_acc:.2f}")
+                        logger.info(f"[trial {trial} fold {outer_fold}] step={step} C={C} Avg Inner Acc={avg_inner_acc:.2f}")
 
                         if avg_inner_acc > best_score:
                             best_score = avg_inner_acc
@@ -204,7 +205,7 @@ def evaluate_wl_cv(disjoint_graph, graph_id_label_map, h_grid, c_grid,
                 writer_test.writerow([trial, outer_fold, C_best, step_best, outer_acc, n_colors_best])
                 f_test.flush()
 
-                logger.info(f"[Trial {trial} Fold {outer_fold}] BEST C={C_best} step={step_best} Outer Test Acc={outer_acc:.2f}")
+                logger.info(f"[trial {trial} fold {outer_fold}] BEST C={C_best} step={step_best} Outer Test Acc={outer_acc:.2f}")
 
     logger.info("Evaluation complete.")
 
@@ -271,13 +272,13 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
         writer_test = csv.writer(f_test, delimiter=";")
         writer_trial_acc = csv.writer(f_trial_acc, delimiter=";")
 
-        writer_train.writerow(["Trial", "Outer Fold", "C", "h", "k", "method", "Inner Accuracy"])
-        writer_test.writerow(["Trial", "Outer Fold", "C", "h", "k", "method", "Outer Test Accuracy"])
-        writer_trial_acc.writerow(["Trial", "Average-Accuracy"])
+        writer_train.writerow(["trial", "Outer fold", "C", "h", "k", "method", "Inner Accuracy"])
+        writer_test.writerow(["trial", "Outer fold", "C", "h", "k", "method", "Outer Test Accuracy"])
+        writer_trial_acc.writerow(["trial", "Average-Accuracy"])
 
         for trial in range(start_repeat, repeats + 1):
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=1234)
-            logger.info(f"[Trial {trial}] Starting outer cross-validation")
+            logger.info(f"[trial {trial}] Starting outer cross-validation")
 
             outer_fold_accuracies = []
 
@@ -322,7 +323,7 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
                                                avg_inner_acc])
                         f_train.flush()
 
-                        logger.info(f"[Trial {trial} Fold {outer_fold}] Params {gwl_params} C={model_params['C']} Avg Inner Acc={avg_inner_acc:.2f}")
+                        logger.info(f"[trial {trial} fold {outer_fold}] Params {gwl_params} C={model_params['C']} Avg Inner Acc={avg_inner_acc:.2f}")
 
                         if avg_inner_acc > best_score:
                             best_score = avg_inner_acc
@@ -350,16 +351,16 @@ def evaluate_gwl_cv(disjoint_graph, graph_id_label_map, h_grid, k_grid, c_grid,
                                       outer_acc])
                 f_test.flush()
 
-                logger.info(f"[Trial {trial} Fold {outer_fold}] Outer Test Acc={outer_acc:.2f}")
+                logger.info(f"[trial {trial} fold {outer_fold}] Outer Test Acc={outer_acc:.2f}")
 
                 outer_fold_accuracies.append(outer_acc)
 
-            #### Trial accuracy ####
-            logger.info(f"Trial {trial}] Outer fold accuracies: {outer_fold_accuracies}")
+            #### trial accuracy ####
+            logger.info(f"trial {trial}] Outer fold accuracies: {outer_fold_accuracies}")
             trial_avg = np.mean(outer_fold_accuracies)
             writer_trial_acc.writerow([trial, trial_avg])
             f_trial_acc.flush()
-            logger.info(f"[Trial {trial}] Average outer fold accuracy: {trial_avg:.2f}")
+            logger.info(f"[trial {trial}] Average outer fold accuracy: {trial_avg:.2f}")
 
     logger.info("Evaluation complete.")
 
@@ -377,7 +378,7 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
     refinement_method = "QSC"
 
     #### Create output folder ####
-    main_dir = f"{dataset_name}-Evaluation-QSC-{timestamp}"
+    main_dir = f"{dataset_name}-Evaluation-QSC-20250505_231551"
     os.makedirs(main_dir, exist_ok=True)
 
     train_filename = os.path.join(main_dir, "train_results.csv")
@@ -392,103 +393,22 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
 
     #### 1️⃣ Precompute feature vectors ####
     fv_dir = os.path.join(main_dir, "feature_vectors")
-    os.makedirs(fv_dir, exist_ok=True)
 
-    refinement_steps_grid = sorted(refinement_steps_grid)
-    cg = ColoredGraph(disjoint_graph.copy())
-    qsc = QuasiStableColoringGraph(cg, q=0.0, n_colors=np.inf, q_tolerance=0.0, logger=logger)
-
-    logger.info(f"Computing feature vector for step={0}...")
-    fv_matrix = cg.generate_feature_matrix()
-    logger.info(f"Dimension of feature vector for step={0} is {fv_matrix.shape[1] - 1}")
-    params = {
-        "n_colors": len(qsc.partitions),
-        "step": 0,
-        "max_q_error": np.inf
-    }
-
-
-    fv_filename = f"step_{0}.pkl"
-    fv_path = os.path.join(fv_dir, fv_filename)
-
-    with open(fv_path, "wb") as f:
-        pickle.dump((fv_matrix, params), f)
-
-    logger.info(f"Saved feature vector for step={params['step']} "
-                f"(n_colors={params['n_colors']}, max_q_error={params['max_q_error']:.4f})")
-
-    # ✅ Append refinement results to CSV
-    refinement_results_file = os.path.join(main_dir, "refinement_results.csv")
-    file_exists = os.path.exists(refinement_results_file)
-
-    with open(refinement_results_file, "a", newline="") as f_refine:
-        writer = csv.writer(f_refine)
-        if not file_exists:
-            writer.writerow(["step", "feature_dim", "max_q_error", "n_colors"])
-        writer.writerow([
-            0,
-            fv_matrix.shape[1] - 1,
-            np.inf,
-            params["n_colors"]
-        ])
-
-    saved_steps = set()
-
-    max_requested_step = max(refinement_steps_grid)
-    while qsc.refinement_step < max_requested_step:
-        n_colors, step, max_q_error = qsc.refine_one_step()
-
-        if step in refinement_steps_grid and step not in saved_steps:
-            fv_filename = f"step_{step}.pkl"
-            fv_path = os.path.join(fv_dir, fv_filename)
-
-            logger.info(f"Computing feature vector for step={step}...")
-            fv_matrix = cg.generate_feature_matrix()
-            logger.info(f"Dimension of feature vector for step={step} is {fv_matrix.shape[1] - 1}")
-            params = {
-                "n_colors": len(qsc.partitions),
-                "step": step,
-                "max_q_error": max_q_error
-            }
-
-            with open(fv_path, "wb") as f:
-                pickle.dump((fv_matrix, params), f)
-
-            saved_steps.add(step)
-
-            logger.info(f"Saved feature vector for step={params['step']} "
-                        f"(n_colors={params['n_colors']}, max_q_error={params['max_q_error']:.4f})")
-
-            # ✅ Append refinement results to CSV
-            refinement_results_file = os.path.join(main_dir, "refinement_results.csv")
-            file_exists = os.path.exists(refinement_results_file)
-
-            with open(refinement_results_file, "a", newline="") as f_refine:
-                writer = csv.writer(f_refine)
-                if not file_exists:
-                    writer.writerow(["step", "feature_dim", "max_q_error", "n_colors"])
-                writer.writerow([
-                    params["step"],
-                    fv_matrix.shape[1] - 1,
-                    params["max_q_error"],
-                    params["n_colors"]
-                ])
-
-        if qsc.q_error == 0.0:
-            logger.info("Q-error reached 0.0 — stopping further refinement.")
-            break
+    fv_dir = generate_quasistable_feature_vectors(
+        disjoint_graph, refinement_steps_grid, fv_dir, logger
+    )
 
     #### 2️⃣ Cross-validation ####
     with open(train_filename, "w", newline="") as f_train, open(test_filename, "w", newline="") as f_test:
         writer_train = csv.writer(f_train)
         writer_test = csv.writer(f_test)
 
-        writer_train.writerow(["Trial", "Fold", "C", "step", "accuracy", "n_colors", "q_error"])
-        writer_test.writerow(["Trial", "Fold", "C", "step", "accuracy", "n_colors", "q_error"])
+        writer_train.writerow(["trial", "fold", "C", "step", "accuracy", "n_colors", "q_error"])
+        writer_test.writerow(["trial", "fold", "C", "step", "accuracy", "n_colors", "q_error"])
 
         for trial in range(start_repeat, repeats + 1):
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=trial)
-            logger.info(f"[Trial {trial}] Starting outer cross-validation")
+            logger.info(f"[trial {trial}] Starting outer cross-validation")
 
             for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(graph_ids, graph_labels), 1):
                 x_train, y_train = graph_ids[train_idx], graph_labels[train_idx]
@@ -530,10 +450,10 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
                             inner_accuracies.append(outer_acc)
 
                         avg_inner_acc = np.mean(inner_accuracies)
-                        writer_train.writerow([trial, outer_fold, C, step, avg_inner_acc, params['n_colors'], params['q_error']])
+                        writer_train.writerow([trial, outer_fold, C, step, avg_inner_acc, params['n_colors'], params['max_q_error']])
                         f_train.flush()
 
-                        logger.info(f"[Trial {trial} Fold {outer_fold}] step={step} C={C}  Avg Inner Acc={avg_inner_acc:.4f}")
+                        logger.info(f"[trial {trial} fold {outer_fold}] step={step} C={C}  Avg Inner Acc={avg_inner_acc:.4f}")
 
                         if avg_inner_acc > best_score:
                             best_score = avg_inner_acc
@@ -541,7 +461,7 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
 
                 #### Outer fold test ####
                 if best_params is None:
-                    logger.warning(f"No valid parameter combination found for Trial {trial} Fold {outer_fold}. Skipping.")
+                    logger.warning(f"No valid parameter combination found for trial {trial} fold {outer_fold}. Skipping.")
                     continue
 
                 step_best, C_best, params_best = best_params
@@ -560,14 +480,99 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
                 y_pred = model.predict(K_test)
                 outer_acc = accuracy_score(y_test, y_pred) * 100
 
-                writer_test.writerow([trial, outer_fold, C_best, step_best, outer_acc, params_best['n_colors'], params_best['q_error']])
+                writer_test.writerow([trial, outer_fold, C_best, step_best, outer_acc, params_best['n_colors'], params_best['max_q_error']])
                 f_test.flush()
 
-                logger.info(f"[Trial {trial} Fold {outer_fold}] BEST C={C_best} step={step_best} Outer Test Acc={outer_acc:.4f} "
-                            f"(n_colors={params_best['n_colors']}, q_error={params_best['q_error']:.4f})")
+                logger.info(f"[trial {trial} fold {outer_fold}] BEST C={C_best} step={step_best} Outer Test Acc={outer_acc:.4f} "
+                            f"(n_colors={params_best['n_colors']}, q_error={params_best['max_q_error']:.4f})")
 
     logger.info("Evaluation complete.")
     return main_dir
+
+def generate_quasistable_feature_vectors(disjoint_graph, refinement_steps_grid, fv_dir, logger):
+    """
+    Generates and saves feature vectors for a range of refinement steps for Quasi-Stable Coloring.
+    Saves the feature vectors and writes a refinement_results.csv.
+    """
+    os.makedirs(fv_dir, exist_ok=True)
+
+    refinement_steps_grid = sorted(refinement_steps_grid)
+    cg = ColoredGraph(disjoint_graph.copy())
+    qsc = QuasiStableColoringGraph(cg, q=0.0, n_colors=np.inf, q_tolerance=0.0, logger=logger)
+
+    # Step 0 feature vector
+    logger.info(f"Computing feature vector for step=0...")
+    fv_matrix = cg.generate_feature_matrix()
+    params = {
+        "n_colors": len(qsc.partitions),
+        "step": 0,
+        "max_q_error": np.inf
+    }
+
+    fv_filename = f"step_0.pkl"
+    fv_path = os.path.join(fv_dir, fv_filename)
+    with open(fv_path, "wb") as f:
+        pickle.dump((fv_matrix, params), f)
+
+    logger.info(
+        f"Saved feature vector for step=0 "
+        f"(n_colors={params['n_colors']}, max_q_error={params['max_q_error']:.4f})"
+    )
+
+    # CSV to record refinement stats
+    refinement_results_file = os.path.join(fv_dir, "refinement_results.csv")
+    with open(refinement_results_file, "w", newline="") as f_refine:
+        writer = csv.writer(f_refine)
+        writer.writerow(["step", "feature_dim", "max_q_error", "n_colors"])
+        writer.writerow([
+            0,
+            fv_matrix.shape[1] - 1,
+            params["max_q_error"],
+            params["n_colors"]
+        ])
+
+    saved_steps = set()
+    max_requested_step = max(refinement_steps_grid)
+
+    while qsc.refinement_step < max_requested_step:
+        n_colors, step, max_q_error = qsc.refine_one_step()
+
+        if step in refinement_steps_grid and step not in saved_steps:
+            logger.info(f"Computing feature vector for step={step}...")
+            fv_matrix = cg.generate_feature_matrix()
+            params = {
+                "n_colors": len(qsc.partitions),
+                "step": step,
+                "max_q_error": max_q_error
+            }
+
+            fv_filename = f"step_{step}.pkl"
+            fv_path = os.path.join(fv_dir, fv_filename)
+            with open(fv_path, "wb") as f:
+                pickle.dump((fv_matrix, params), f)
+
+            logger.info(
+                f"Saved feature vector for step={step} "
+                f"(n_colors={params['n_colors']}, max_q_error={params['max_q_error']:.4f})"
+            )
+
+            with open(refinement_results_file, "a", newline="") as f_refine:
+                writer = csv.writer(f_refine)
+                writer.writerow([
+                    params["step"],
+                    fv_matrix.shape[1] - 1,
+                    params["max_q_error"],
+                    params["n_colors"]
+                ])
+
+            saved_steps.add(step)
+
+        if qsc.q_error == 0.0:
+            logger.info("Q-error reached 0.0 — stopping further refinement.")
+            break
+
+    return fv_dir
+
 
 def get_stats_from_test_results_csv(test_filename: str):
     """
@@ -589,11 +594,26 @@ def get_stats_from_test_results_csv(test_filename: str):
     mean = trial_means.mean()
     std = trial_means.std()
 
-    print(f"Trial means: {trial_means}")
+    print(f"trial means: {trial_means}")
     print(f"Mean accuracy across trials: {mean:.4f}")
     print(f"Standard deviation across trials: {std:.4f}")
 
     return mean, std
+
+def load_last_n_color_columns(fv_filepath):
+    """Loads a pickled feature vector matrix and extracts only the last n_color columns."""
+    with open(fv_filepath, "rb") as f:
+        fv_matrix, params = pickle.load(f)
+        n_colors = params["n_colors"]
+
+    last_columns = fv_matrix[:, -n_colors:]
+    return last_columns
+
+def load_fv_and_params(fv_filepath):
+    """Loads a pickled feature vector matrix and its parameters."""
+    with open(fv_filepath, "rb") as f:
+        fv_matrix, params = pickle.load(f)
+    return fv_matrix, params
 
 
 def load_and_accumulate_fvs(main_dir, q_grid):
@@ -621,15 +641,10 @@ def load_and_accumulate_fvs(main_dir, q_grid):
     print("Selected steps per q:", dict(zip(q_grid, selected_steps)))
 
     previous_fv = None
-    previous_n_colors = 0
 
     for q, step in zip(q_grid, selected_steps):
         fv_filename = os.path.join(main_dir, "feature_vectors", f"step_{step}.pkl")
-        with open(fv_filename, "rb") as f:
-            fv_matrix, params = pickle.load(f)
-            current_n_colors = params["n_colors"]
-
-        new_part = fv_matrix[:, -current_n_colors:]
+        new_part = load_last_n_color_columns(fv_filename)
 
         if previous_fv is None:
             accumulated = new_part
@@ -637,7 +652,6 @@ def load_and_accumulate_fvs(main_dir, q_grid):
             accumulated = hstack([previous_fv, new_part])
 
         previous_fv = accumulated
-        previous_n_colors = current_n_colors
 
     return accumulated
 
@@ -675,14 +689,14 @@ def evaluate_fixed_feature_vector(
         writer_train = csv.writer(f_train)
         writer_test = csv.writer(f_test)
 
-        writer_train.writerow(["Trial", "Fold", "C", "Inner Accuracy"])
+        writer_train.writerow(["trial", "fold", "C", "Inner Accuracy"])
         writer_test.writerow(["trial", "fold", "C", "accuracy"])
 
         for trial in range(start_repeat, repeats + 1):
             outer_cv = StratifiedKFold(n_splits=folds, shuffle=True, random_state=trial)
 
             if logger:
-                logger.info(f"[Trial {trial}] Starting outer cross-validation")
+                logger.info(f"[trial {trial}] Starting outer cross-validation")
 
             for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(graph_ids, graph_labels), 1):
                 x_train, y_train = graph_ids[train_idx], graph_labels[train_idx]
@@ -715,7 +729,7 @@ def evaluate_fixed_feature_vector(
                     f_train.flush()
 
                     if logger:
-                        logger.info(f"[Trial {trial} Fold {outer_fold}] C={C} Avg Inner Acc={avg_inner_acc:.2f}")
+                        logger.info(f"[trial {trial} fold {outer_fold}] C={C} Avg Inner Acc={avg_inner_acc:.2f}")
 
                     if avg_inner_acc > best_score:
                         best_score = avg_inner_acc
@@ -735,7 +749,7 @@ def evaluate_fixed_feature_vector(
 
                 if logger:
                     logger.info(
-                        f"[Trial {trial} Fold {outer_fold}] BEST C={best_C} Outer Test Acc={outer_acc:.2f}"
+                        f"[trial {trial} fold {outer_fold}] BEST C={best_C} Outer Test Acc={outer_acc:.2f}"
                     )
 
     if logger:

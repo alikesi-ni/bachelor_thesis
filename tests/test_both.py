@@ -12,9 +12,10 @@ dataset_names = [
     # "PTC_FM"
     # "KKI",
     # "ENZYMES",
-    "MSRC_9",
+    # "MSRC_9",
     # "IMDB-BINARY",
     # "REDDIT-BINARY",
+    "EGO-1"
     # "EGO-2"
     # "EGO-3",
     # "DD",
@@ -37,7 +38,7 @@ for dataset_name in dataset_names:
     graph_id_label_map = {g.graph["graph_id"]: g.graph["graph_label"] for g in graphs}
 
     # h_grid = list(range(1, 11))
-    h_grid = range(1, 50)
+    h_grid = [1000]
     k_grid = [2, 4, 8, 16]
     q_grid = [2**i for i in range(3, -1, -1)] + [0]
     n_max = 1024
@@ -50,8 +51,8 @@ for dataset_name in dataset_names:
         disjoint_graph, graph_id_label_map, refinement_steps_grid=refinement_steps_grid, c_grid=c_grid, folds=10, dataset_name=dataset_name, repeats=1, start_repeat=1
     )
 
-    # res_dir = "../tests/MSRC_9-Evaluation-QSC-20250505_210237"
-    #
+    # res_dir = "../tests/MSRC_9-Evaluation-QSC-20250506_111034"
+
     # get_stats_from_test_results_csv(os.path.join(res_dir, "test_results.csv"))
 
     # evaluate_wl_cv(

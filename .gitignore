@@ -5,6 +5,8 @@ tests/results/*.csv
 tests/results/*.txt
 tests/*.csv
 tests/*.txt
+/tests/**/*.txt
+/tests/**/*.csv
 *.npz
 *-Evaluation-*[0-9]*/
 

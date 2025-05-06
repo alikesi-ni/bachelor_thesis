@@ -1,12 +1,15 @@
 import os
+import pickle
 
 import networkx as nx
 import numpy as np
+from scipy.sparse import hstack
 
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.utils.read_data_utils import dataset_to_graphs
 from thesis.utils.test_utils import evaluate_quasistable_cv, evaluate_wl_cv, evaluate_gwl_cv, \
-    get_stats_from_test_results_csv, load_and_accumulate_fvs, evaluate_fixed_feature_vector
+    get_stats_from_test_results_csv, load_and_accumulate_fvs, evaluate_fixed_feature_vector, load_last_n_color_columns, \
+    load_fv_and_params
 
 dataset_names = [
     # "PTC_FM"
@@ -46,10 +49,14 @@ for dataset_name in dataset_names:
 
     c_grid = [10**i for i in range(-3, 4)]  # SVM C ∈ {1e-3 to 1e3}
 
-    res_dir = "../tests/MSRC_9-Evaluation-QSC-20250505_215453"
+    res_dir = "../tests/MSRC_9-Evaluation-QSC-20250505_231551"
     q_grid = [16]
+    h = 33
 
-    fvm = load_and_accumulate_fvs(res_dir, q_grid)
+    # fvm = load_and_accumulate_fvs(res_dir, q_grid)
+    # refined_fvm = load_last_n_color_columns(os.path.join(res_dir, "feature_vectors", "step_refined.pkl"))
+    # fvm = hstack([fvm, refined_fvm])
+    fvm, _ = load_fv_and_params(os.path.join(res_dir, "feature_vectors", f"step_{h}.pkl"))
     dir = evaluate_fixed_feature_vector(
         feature_matrix=fvm,
         graph_id_label_map=graph_id_label_map,

@@ -6,7 +6,7 @@ import numpy as np
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.utils.read_data_utils import dataset_to_graphs
 from thesis.utils.test_utils import evaluate_quasistable_cv, evaluate_wl_cv, evaluate_gwl_cv, \
-    get_stats_from_test_results_csv
+    get_stats_from_test_results_csv, load_and_accumulate_fvs, evaluate_fixed_feature_vector
 
 dataset_names = [
     # "PTC_FM"
@@ -37,7 +37,7 @@ for dataset_name in dataset_names:
     graph_id_label_map = {g.graph["graph_id"]: g.graph["graph_label"] for g in graphs}
 
     # h_grid = list(range(1, 11))
-    h_grid = range(1, 50)
+    h_grid = range(1, 28)
     k_grid = [2, 4, 8, 16]
     q_grid = [2**i for i in range(3, -1, -1)] + [0]
     n_max = 1024
@@ -46,9 +46,22 @@ for dataset_name in dataset_names:
 
     c_grid = [10**i for i in range(-3, 4)]  # SVM C ∈ {1e-3 to 1e3}
 
-    evaluate_quasistable_cv(
-        disjoint_graph, graph_id_label_map, refinement_steps_grid=refinement_steps_grid, c_grid=c_grid, folds=10, dataset_name=dataset_name, repeats=1, start_repeat=1
+    res_dir = "../tests/MSRC_9-Evaluation-QSC-20250505_215453"
+    q_grid = [16]
+
+    fvm = load_and_accumulate_fvs(res_dir, q_grid)
+    dir = evaluate_fixed_feature_vector(
+        feature_matrix=fvm,
+        graph_id_label_map=graph_id_label_map,
+        C_grid=c_grid,
+        dataset_name=dataset_name,
+        folds=10,
+        repeats=10
     )
+
+    # dir = "../tests/MSRC_9-Evaluation-FixedFV-20250505_230010"
+
+    get_stats_from_test_results_csv(os.path.join(dir, "test_results.csv"))
 
     # res_dir = "../tests/MSRC_9-Evaluation-QSC-20250505_210237"
     #

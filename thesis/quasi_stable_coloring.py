@@ -1,6 +1,5 @@
 import time
 from collections import defaultdict
-from concurrent.futures import ThreadPoolExecutor
 
 import networkx as nx
 import numpy as np
@@ -32,36 +31,37 @@ class ColorStats:
 
 
 class QuasiStableColoringGraph:
-    def __init__(self, colored_graph: ColoredGraph, q=0.0, n_colors=np.inf, refinement_steps=np.inf, weighting=False, q_tolerance=0.0, logger=None, logging_level="error"):
+    def __init__(self, colored_graph: ColoredGraph, q=0.0, n_colors=np.inf, max_steps=np.inf, weighting=False,
+                 q_tolerance=0.0, logger=None, logging_level="error"):
         self.colored_graph = colored_graph
         self.graph = colored_graph.graph
         self.q = q
         self.n_colors = n_colors
-        self.refinement_steps = refinement_steps
+        self.max_steps = max_steps
         self.weighting = weighting
         self.q_tolerance = q_tolerance
 
         self.partitions = []
-        self.q_error = np.inf
-        self.q_error_before = np.inf
-        self.refinement_step = 0
+        self.current_max_q_error = np.inf
+        self.previous_max_q_error = np.inf
+        self.current_step = 0
         self.color_stats = None
         self.weights = None
 
         self.logging_level = logging_level
         self.logger = logger if logger else LoggerFactory.get_console_logger(__name__, logging_level)
 
-        self.__assert_nodes_start_from_zero()
+        self._assert_nodes_start_from_zero()
         self.is_set_up = False
-        self.__set_up()
+        self._set_up()
 
-    def __assert_nodes_start_from_zero(self):
+    def _assert_nodes_start_from_zero(self):
         nodes = list(self.graph.nodes)
         sorted_nodes = sorted(nodes)
         assert sorted_nodes[0] == 0, "Node indices must start at 0"
         assert sorted_nodes == list(range(len(nodes))), "Node indices must be consecutive integers starting from 0"
 
-    def partition_matrix(self):
+    def _get_partition_matrix(self) -> csr_array:
         num_nodes = sum(len(partition) for partition in self.partitions)
         num_partitions = len(self.partitions)
         I = np.zeros(num_nodes, dtype=int)
@@ -75,8 +75,8 @@ class QuasiStableColoringGraph:
                 i += 1
         return csr_array((V, (I, J)), shape=(self.graph.number_of_nodes(), num_partitions))
 
-    def update_stats(self):
-        P_sparse = self.partition_matrix()
+    def _update_stats(self):
+        P_sparse = self._get_partition_matrix()
         self.color_stats.neighbor = self.weights.dot(P_sparse)
 
         m = len(self.partitions)
@@ -96,26 +96,26 @@ class QuasiStableColoringGraph:
                 self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m]
             )
 
-    def update_stats_partitions(self, partitions_to_be_updated):
+    def _update_stats_partitions(self, indices_to_be_updated):
         start_time = time.time()
         m = len(self.partitions)
 
-        for partition in partitions_to_be_updated:
-            nodes = self.partitions[partition]
+        for i in indices_to_be_updated:
+            nodes = self.partitions[i]
             degs = np.array(self.weights[:, nodes].sum(axis=1)).flatten()
-            self.color_stats.neighbor[:, partition] = degs
-            self.color_stats.upper_base[partition, :m] = np.max(self.color_stats.neighbor[nodes, :], axis=0).toarray()
-            self.color_stats.lower_base[partition, :m] = np.min(self.color_stats.neighbor[nodes, :], axis=0).toarray()
+            self.color_stats.neighbor[:, i] = degs
+            self.color_stats.upper_base[i, :m] = np.max(self.color_stats.neighbor[nodes, :], axis=0).toarray()
+            self.color_stats.lower_base[i, :m] = np.min(self.color_stats.neighbor[nodes, :], axis=0).toarray()
 
         for i, partition in enumerate(self.partitions):
-            for partition_to_be_updated in partitions_to_be_updated:
-                self.color_stats.upper_base[i, partition_to_be_updated] = np.max(
-                    self.color_stats.neighbor[partition, partition_to_be_updated])
-                self.color_stats.lower_base[i, partition_to_be_updated] = np.min(
-                    self.color_stats.neighbor[partition, partition_to_be_updated])
+            for j in indices_to_be_updated:
+                self.color_stats.upper_base[i, j] = np.max(
+                    self.color_stats.neighbor[partition, j])
+                self.color_stats.lower_base[i, j] = np.min(
+                    self.color_stats.neighbor[partition, j])
 
         if self.weighting:
-            sizes = np.array([len(p) for p in self.partitions]).reshape(-1, 1)
+            sizes = np.array([len(partition) for partition in self.partitions]).reshape(-1, 1)
             self.color_stats.errors_base[:m, :m] = (self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[
                                                                                           :m, :m]) * sizes
         else:
@@ -131,112 +131,99 @@ class QuasiStableColoringGraph:
         self.colored_graph.color_stack_height += 1
         elapsed = (time.time() - start_time)
         self.logger.info(
-            f"[step {self.refinement_step}] update_stats_partitions completed in {elapsed:.2f} s"
+            f"[step {self.current_step}] update_stats_partitions completed in {elapsed:.2f} s"
         )
 
     def refine(self):
-        self.__set_up()
+        self._set_up()
 
-        while len(self.partitions) < self.n_colors and self.refinement_step < self.refinement_steps:
-            self.q_error_before = self.q_error
-            self.refinement_step += 1
-
-            m = len(self.partitions)
-            errors = self.color_stats.errors_base[:m, :m]
-            self.q_error = np.max(errors)
-
-            if self.q_error > self.q_error_before:
-                self.logger.warning(f"[refinement_step {self.refinement_step}] Q-ERROR JUMPED: from {self.q_error_before:.1f} to {self.q_error:.1f}")
-                self.logger.warning("--------------------")
-
-            threshold = self.q_error * (1 - self.q_tolerance)
-            witness_pairs = np.argwhere(errors >= threshold)
-
-            self.logger.info(
-                f"[refinement_step {self.refinement_step}] Found {len(witness_pairs)} witness pairs with q-error >= {threshold:.1f} "
-                f"(max={self.q_error:.1f}, tolerance={self.q_tolerance:.2f})"
-            )
-
-            if self.q_error <= self.q:
+        while (
+                len(self.partitions) < self.n_colors and
+                self.current_step < self.max_steps and
+                self.current_max_q_error > 0.0
+        ):
+            if self.current_max_q_error == 0.0:
+                self.logger.info(
+                    f"[step {self.current_step}] Reached stable state: no changes in color count."
+                )
                 break
 
-            split_conditions = defaultdict(list)
-            for witness_i, witness_j in witness_pairs:
-                degrees = self.color_stats.neighbor[self.partitions[witness_i], witness_j].toarray().flatten()
-                split_deg = np.mean(degrees)
-                split_conditions[witness_i].append((witness_j, split_deg))
+            self.refine_one_step()
 
-            proposed_splits = {}
-            for witness_i, conditions in split_conditions.items():
-                node_buckets = defaultdict(list)
-                nodes = self.partitions[witness_i]
-                for node in nodes:
-                    signature = []
-                    for witness_j, split_deg in conditions:
-                        degree = self.color_stats.neighbor[node, witness_j]
-                        signature.append(int(degree > split_deg))
-                    signature = tuple(signature)
-                    node_buckets[signature].append(node)
+        self.logger.info(
+            f"QSC REFINEMENT DONE: steps: {self.current_step}, color_count: {len(self.partitions)}, "
+            f"max_q_error: {self.current_max_q_error}"
+        )
 
-                proposed_splits[witness_i] = list(node_buckets.values())
-
-            changed_indices = set()
-            for witness_i, split_groups in proposed_splits.items():
-                first_group = split_groups.pop(0)
-                self.partitions[witness_i] = first_group
-                changed_indices.add(witness_i)
-                for group in split_groups:
-                    if group:
-                        self.partitions.append(group)
-                        changed_indices.add(len(self.partitions) - 1)
-
-            m = len(self.partitions)
-            rows, cols = self.color_stats.neighbor.shape
-            if self.color_stats.n < m:
-                self.logger.info(f"[refinement_step {self.refinement_step}] Limit of {self.color_stats.n} reached: Updated color stats size")
-                new_n = 1 if m == 0 else 2**(m - 1).bit_length()
-                self.color_stats = self.color_stats.resize(self.color_stats.v, new_n)
-            if cols < m:
-                extra_cols = csr_array((rows, m - cols), dtype=np.float64)
-                self.color_stats.neighbor = hstack([self.color_stats.neighbor, extra_cols])
-
-            self.update_stats_partitions(changed_indices)
-
-            self.logger.info(f"[refinement_step {self.refinement_step}] color count: {len(self.partitions)}; q-error: {self.q_error}")
-            self.logger.info("--------------------")
-
-        self.logger.info(f"QSC DONE: color count: {len(self.partitions)}, max q-error={self.q_error}, refinement_steps={self.refinement_step}")
-
-        return len(self.partitions), self.refinement_step, self.q_error
+        return len(self.partitions), self.current_step, self.current_max_q_error
 
     def refine_one_step(self):
         if not self.is_set_up:
-            self.__set_up()
+            self._set_up()
 
-        if self.q_error == 0.0:
+        if self.current_max_q_error == 0.0:
             self.logger.warning(f"Q-error already 0.0 - no further refinement possible")
-            return len(self.partitions), self.refinement_step, self.q_error
+            return len(self.partitions), self.current_step, self.current_max_q_error
 
-        self.q_error_before = self.q_error
-        self.refinement_step += 1
+        self.previous_max_q_error = self.current_max_q_error
+        self.current_step += 1
 
         m = len(self.partitions)
         errors = self.color_stats.errors_base[:m, :m]
-        self.q_error = np.max(errors)
-
-        if self.q_error > self.q_error_before:
-            self.logger.warning(
-                f"[refinement_step {self.refinement_step}] Q-ERROR JUMPED: from {self.q_error_before:.1f} to {self.q_error:.1f}")
-            self.logger.warning("--------------------")
-
-        threshold = self.q_error * (1 - self.q_tolerance)
+        threshold = self.previous_max_q_error * (1 - self.q_tolerance)
         witness_pairs = np.argwhere(errors >= threshold)
 
         self.logger.info(
-            f"[refinement_step {self.refinement_step}] Found {len(witness_pairs)} witness pairs with q-error >= {threshold:.1f} "
-            f"(max={self.q_error:.1f}, tolerance={self.q_tolerance:.2f})"
+            f"[step {self.current_step}] Found {len(witness_pairs)} witness pairs with q-error >= {threshold:.1f} "
+            f"(max={self.previous_max_q_error:.1f}, tolerance={self.q_tolerance:.2f})"
         )
 
+        proposed_splits = self._propose_splits(witness_pairs)
+
+        indices_with_node_changes = self._execute_splits(proposed_splits)
+
+        self._resize_if_necessary()
+
+        self._update_stats_partitions(indices_with_node_changes)
+
+        m = len(self.partitions)
+        errors = self.color_stats.errors_base[:m, :m]
+        self.current_max_q_error = np.max(errors)
+
+        if self.current_max_q_error > self.previous_max_q_error:
+            self.logger.warning(
+                f"[step {self.current_step}] max q-error JUMPED from {self.previous_max_q_error:.1f} to {self.current_max_q_error:.1f}")
+
+        self.logger.info(f"[step {self.current_step}] DONE: color_count: {len(self.partitions)}; max_q_error: {self.current_max_q_error}")
+        self.logger.info("--------------------")
+
+        return len(self.partitions), self.current_step, self.current_max_q_error
+
+    def _resize_if_necessary(self):
+        m = len(self.partitions)
+        rows, cols = self.color_stats.neighbor.shape
+        if self.color_stats.n < m:
+            self.logger.info(
+                f"[step {self.current_step}] Limit of {self.color_stats.n} reached: Updated color stats size")
+            new_n = 1 if m == 0 else 2 ** (m - 1).bit_length()
+            self.color_stats = self.color_stats.resize(self.color_stats.v, new_n)
+        if cols < m:
+            extra_cols = csr_array((rows, m - cols), dtype=np.float64)
+            self.color_stats.neighbor = hstack([self.color_stats.neighbor, extra_cols])
+
+    def _execute_splits(self, proposed_splits):
+        changed_indices = set()
+        for witness_i, split_groups in proposed_splits.items():
+            first_group = split_groups.pop(0)
+            self.partitions[witness_i] = first_group
+            changed_indices.add(witness_i)
+            for group in split_groups:
+                if group:
+                    self.partitions.append(group)
+                    changed_indices.add(len(self.partitions) - 1)
+        return changed_indices
+
+    def _propose_splits(self, witness_pairs):
         split_conditions = defaultdict(list)
         for witness_i, witness_j in witness_pairs:
             degrees = self.color_stats.neighbor[self.partitions[witness_i], witness_j].toarray().flatten()
@@ -256,36 +243,9 @@ class QuasiStableColoringGraph:
                 node_buckets[signature].append(node)
 
             proposed_splits[witness_i] = list(node_buckets.values())
+        return proposed_splits
 
-        changed_indices = set()
-        for witness_i, split_groups in proposed_splits.items():
-            first_group = split_groups.pop(0)
-            self.partitions[witness_i] = first_group
-            changed_indices.add(witness_i)
-            for group in split_groups:
-                if group:
-                    self.partitions.append(group)
-                    changed_indices.add(len(self.partitions) - 1)
-
-        m = len(self.partitions)
-        rows, cols = self.color_stats.neighbor.shape
-        if self.color_stats.n < m:
-            self.logger.info(
-                f"[refinement_step {self.refinement_step}] Limit of {self.color_stats.n} reached: Updated color stats size")
-            new_n = 1 if m == 0 else 2 ** (m - 1).bit_length()
-            self.color_stats = self.color_stats.resize(self.color_stats.v, new_n)
-        if cols < m:
-            extra_cols = csr_array((rows, m - cols), dtype=np.float64)
-            self.color_stats.neighbor = hstack([self.color_stats.neighbor, extra_cols])
-
-        self.update_stats_partitions(changed_indices)
-
-        self.logger.info(f"[refinement_step {self.refinement_step}] color count: {len(self.partitions)}; q-error: {self.q_error}")
-        self.logger.info("--------------------")
-
-        return len(self.partitions), self.refinement_step, self.q_error
-
-    def __set_up(self):
+    def _set_up(self):
         color_groups = defaultdict(list)
         for node, color_stack in nx.get_node_attributes(self.graph, "color-stack").items():
             color = color_stack[-1]
@@ -295,5 +255,8 @@ class QuasiStableColoringGraph:
 
         self.weights = nx.adjacency_matrix(self.graph, nodelist=sorted(self.graph.nodes), dtype=np.float64)
         self.color_stats = ColorStats(len(self.graph), max(len(self.partitions), int(min(self.n_colors, 128))))
-        self.update_stats()
+        self._update_stats()
+        m = len(self.partitions)
+        errors = self.color_stats.errors_base[:m, :m]
+        self.current_max_q_error = np.max(errors)
         self.is_set_up = True

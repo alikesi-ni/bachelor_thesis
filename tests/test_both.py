@@ -39,7 +39,7 @@ for dataset_name in dataset_names:
     graph_id_label_map = {g.graph["graph_id"]: g.graph["graph_label"] for g in graphs}
 
     # h_grid = list(range(1, 11))
-    h_grid = [1000]
+    h_grid = [8]
     k_grid = [2, 4, 8, 16]
     q_grid = [2**i for i in range(3, -1, -1)] + [0]
     n_max = 1024

@@ -533,7 +533,7 @@ def generate_quasistable_feature_vectors(disjoint_graph, refinement_steps_grid, 
 
     max_requested_step = max(refinement_steps_grid)
 
-    while qsc.refinement_step < max_requested_step:
+    while qsc.current_step < max_requested_step:
         n_colors, step, max_q_error = qsc.refine_one_step()
 
         logger.info(f"Computing feature vector for step={step}...")

@@ -12,10 +12,10 @@ from thesis.utils.test_utils import evaluate_quasistable_cv, evaluate_wl_cv, eva
     load_fv_and_params
 
 dataset_names = [
-    # "PTC_FM"
+    "PTC_FM"
     # "KKI",
     # "ENZYMES",
-    "MSRC_9",
+    # "MSRC_9",
     # "IMDB-BINARY",
     # "REDDIT-BINARY",
     # "EGO-2"
@@ -49,12 +49,12 @@ for dataset_name in dataset_names:
 
     c_grid = [10**i for i in range(-3, 4)]  # SVM C ∈ {1e-3 to 1e3}
 
-    res_dir = "../tests/MSRC_9-Evaluation-QSC-20250505_231551"
-    q_grid = [16]
-    h = 33
+    res_dir = "../tests/PTC_FM-Evaluation-QSC-20250507_195251"
+    q_grid = [4,3,2,1]
+    h = 8
 
-    # fvm = load_and_accumulate_fvs(res_dir, q_grid)
-    # refined_fvm = load_last_n_color_columns(os.path.join(res_dir, "feature_vectors", "step_refined.pkl"))
+    fvm = load_and_accumulate_fvs(res_dir, q_grid)
+    refined_fvm = load_last_n_color_columns(os.path.join(res_dir, "feature_vectors", "step_refined.pkl"))
     # fvm = hstack([fvm, refined_fvm])
     fvm, _ = load_fv_and_params(os.path.join(res_dir, "feature_vectors", f"step_{h}.pkl"))
     dir = evaluate_fixed_feature_vector(
@@ -63,7 +63,7 @@ for dataset_name in dataset_names:
         C_grid=c_grid,
         dataset_name=dataset_name,
         folds=10,
-        repeats=10
+        repeats=1
     )
 
     # dir = "../tests/MSRC_9-Evaluation-FixedFV-20250505_230010"

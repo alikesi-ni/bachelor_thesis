@@ -15,9 +15,10 @@ dataset_names = [
     # "MSRC_9",
     # "IMDB-BINARY",
     # "REDDIT-BINARY",
-    "EGO-1"
+    # "EGO-1",
     # "EGO-2"
     # "EGO-3",
+    "NCI1",
     # "DD",
     # "EGO-4"
 ]

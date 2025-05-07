@@ -531,45 +531,37 @@ def generate_quasistable_feature_vectors(disjoint_graph, refinement_steps_grid, 
             params["n_colors"]
         ])
 
-    saved_steps = set()
     max_requested_step = max(refinement_steps_grid)
 
     while qsc.refinement_step < max_requested_step:
         n_colors, step, max_q_error = qsc.refine_one_step()
 
-        if step in refinement_steps_grid and step not in saved_steps:
-            logger.info(f"Computing feature vector for step={step}...")
-            fv_matrix = cg.generate_feature_matrix()
-            params = {
-                "n_colors": len(qsc.partitions),
-                "step": step,
-                "max_q_error": max_q_error
-            }
+        logger.info(f"Computing feature vector for step={step}...")
+        fv_matrix = cg.generate_feature_matrix()
+        params = {
+            "n_colors": len(qsc.partitions),
+            "step": step,
+            "max_q_error": max_q_error
+        }
 
-            fv_filename = f"step_{step}.pkl"
-            fv_path = os.path.join(fv_dir, fv_filename)
-            with open(fv_path, "wb") as f:
-                pickle.dump((fv_matrix, params), f)
+        fv_filename = f"step_{step}.pkl"
+        fv_path = os.path.join(fv_dir, fv_filename)
+        with open(fv_path, "wb") as f:
+            pickle.dump((fv_matrix, params), f)
 
-            logger.info(
-                f"Saved feature vector for step={step} "
-                f"(n_colors={params['n_colors']}, max_q_error={params['max_q_error']:.4f})"
-            )
+        logger.info(
+            f"Saved feature vector for step={step} "
+            f"(n_colors={params['n_colors']}, max_q_error={params['max_q_error']:.4f})"
+        )
 
-            with open(refinement_results_file, "a", newline="") as f_refine:
-                writer = csv.writer(f_refine)
-                writer.writerow([
-                    params["step"],
-                    fv_matrix.shape[1] - 1,
-                    params["max_q_error"],
-                    params["n_colors"]
-                ])
-
-            saved_steps.add(step)
-
-        if qsc.q_error == 0.0:
-            logger.info("Q-error reached 0.0 — stopping further refinement.")
-            break
+        with open(refinement_results_file, "a", newline="") as f_refine:
+            writer = csv.writer(f_refine)
+            writer.writerow([
+                params["step"],
+                fv_matrix.shape[1] - 1,
+                params["max_q_error"],
+                params["n_colors"]
+            ])
 
     return fv_dir
 

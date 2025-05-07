@@ -3,7 +3,7 @@ import sys
 
 class LoggerFactory:
     _formatter = logging.Formatter(
-        "%(asctime)s %(levelname)-5s - %(message)s",
+        "%(asctime)s.%(msecs)03d %(levelname)-5s - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 

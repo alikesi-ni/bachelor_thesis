@@ -9,7 +9,7 @@ from thesis.utils.test_utils import evaluate_quasistable_cv, evaluate_wl_cv, eva
     get_stats_from_test_results_csv
 
 dataset_names = [
-    # "PTC_FM"
+    "PTC_FM"
     # "KKI",
     # "ENZYMES",
     # "MSRC_9",
@@ -18,7 +18,7 @@ dataset_names = [
     # "EGO-1",
     # "EGO-2"
     # "EGO-3",
-    "NCI1",
+    # "NCI1",
     # "DD",
     # "EGO-4"
 ]

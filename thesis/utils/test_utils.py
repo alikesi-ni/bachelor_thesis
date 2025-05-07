@@ -378,7 +378,7 @@ def evaluate_quasistable_cv(disjoint_graph, graph_id_label_map,
     refinement_method = "QSC"
 
     #### Create output folder ####
-    main_dir = f"{dataset_name}-Evaluation-QSC-20250505_231551"
+    main_dir = f"{dataset_name}-Evaluation-QSC-{timestamp}"
     os.makedirs(main_dir, exist_ok=True)
 
     train_filename = os.path.join(main_dir, "train_results.csv")

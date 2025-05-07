@@ -100,49 +100,28 @@ class QuasiStableColoringGraph:
         start_time = time.time()
         m = len(self.partitions)
 
-        #### 1️⃣ Parallel update for neighbor, upper_base, lower_base
-        def update_single_partition(partition):
+        for partition in partitions_to_be_updated:
             nodes = self.partitions[partition]
-
             degs = np.array(self.weights[:, nodes].sum(axis=1)).flatten()
-
-            upper = np.max(self.color_stats.neighbor[nodes, :], axis=0).toarray()
-            lower = np.min(self.color_stats.neighbor[nodes, :], axis=0).toarray()
-
-            return partition, degs, upper, lower
-
-        # Threading is safe for numpy/scipy operations
-        with ThreadPoolExecutor() as executor:
-            results = executor.map(update_single_partition, partitions_to_be_updated)
-
-        for partition, degs, upper, lower in results:
             self.color_stats.neighbor[:, partition] = degs
-            self.color_stats.upper_base[partition, :m] = upper
-            self.color_stats.lower_base[partition, :m] = lower
+            self.color_stats.upper_base[partition, :m] = np.max(self.color_stats.neighbor[nodes, :], axis=0).toarray()
+            self.color_stats.lower_base[partition, :m] = np.min(self.color_stats.neighbor[nodes, :], axis=0).toarray()
 
-        #### 2️⃣ Update cross terms (single-threaded)
         for i, partition in enumerate(self.partitions):
             for partition_to_be_updated in partitions_to_be_updated:
                 self.color_stats.upper_base[i, partition_to_be_updated] = np.max(
-                    self.color_stats.neighbor[partition, partition_to_be_updated]
-                )
+                    self.color_stats.neighbor[partition, partition_to_be_updated])
                 self.color_stats.lower_base[i, partition_to_be_updated] = np.min(
-                    self.color_stats.neighbor[partition, partition_to_be_updated]
-                )
+                    self.color_stats.neighbor[partition, partition_to_be_updated])
 
-        #### 3️⃣ Update errors_base
         if self.weighting:
             sizes = np.array([len(p) for p in self.partitions]).reshape(-1, 1)
-            self.color_stats.errors_base[:m, :m] = (
-                                                           self.color_stats.upper_base[:m,
-                                                           :m] - self.color_stats.lower_base[:m, :m]
-                                                   ) * sizes
+            self.color_stats.errors_base[:m, :m] = (self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[
+                                                                                          :m, :m]) * sizes
         else:
             self.color_stats.errors_base[:m, :m] = (
-                    self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m]
-            )
+                        self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m])
 
-        #### 4️⃣ Update color stack (single-threaded to avoid race conditions)
         for partition in self.partitions:
             color_id = self.colored_graph.next_color_id
             for node in partition:
@@ -150,7 +129,6 @@ class QuasiStableColoringGraph:
             self.colored_graph.next_color_id += 1
 
         self.colored_graph.color_stack_height += 1
-
         elapsed = (time.time() - start_time)
         self.logger.info(
             f"[step {self.refinement_step}] update_stats_partitions completed in {elapsed:.2f} s"

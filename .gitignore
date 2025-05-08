@@ -9,6 +9,7 @@ tests/*.txt
 /tests/**/*.csv
 *.npz
 *-Evaluation-*[0-9]*/
+thesis/evaluation-results
 
 # Ignore Python bytecode and cache files
 __pycache__/

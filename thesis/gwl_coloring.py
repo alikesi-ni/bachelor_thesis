@@ -20,7 +20,7 @@ class GWLColoringGraph:
         self.num_forgy_iterations = num_forgy_iterations
         self.seed = seed
 
-        self.__is_refined = None
+        self._is_refined = None
         self.color_hierarchy_tree = None
 
     def refine(self, verbose: bool = False):
@@ -33,16 +33,16 @@ class GWLColoringGraph:
 
         # --- iterative refinement ---
         for _ in range(self.refinement_steps):
-            self.__renep()
+            self._renep()
             self.update_colors()
 
         # Finalize
-        self.__is_refined = True
+        self._is_refined = True
 
         if verbose:
             self.color_hierarchy_tree.print_tree()
 
-    def __renep(self) -> None:
+    def _renep(self) -> None:
         leaves = self.color_hierarchy_tree.get_leaves()
         edge_labels = nx.get_edge_attributes(self.graph, "label")
 

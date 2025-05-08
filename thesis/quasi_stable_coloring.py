@@ -197,7 +197,7 @@ class QuasiStableColoringGraph:
         self.logger.info(f"[step {self.current_step}] DONE: color_count: {len(self.partitions)}; max_q_error: {self.current_max_q_error}")
         self.logger.info("--------------------")
 
-        return len(self.partitions), self.current_step, self.current_max_q_error
+        return len(self.partitions), self.current_step, self.current_max_q_error, len(witness_pairs)
 
     def _resize_if_necessary(self):
         m = len(self.partitions)

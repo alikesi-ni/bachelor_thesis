@@ -1,7 +1,10 @@
 import platform
+from logging import Logger
+
 import cpuinfo
 import psutil
 import subprocess
+
 
 def get_installed_ram():
     try:
@@ -15,10 +18,12 @@ def get_installed_ram():
     except Exception:
         return "Unknown"
 
+
 def get_os_version():
     return f"{platform.system()} {platform.release()}"
 
-def print_machine_spec():
+
+def log_machine_spec(logger: Logger):
     cpu_info = cpuinfo.get_cpu_info()
     cpu_name = cpu_info['brand_raw']
     cores = psutil.cpu_count(logical=False)
@@ -32,15 +37,12 @@ def print_machine_spec():
     python_version = platform.python_version()
     interpreter = platform.python_implementation()
 
-    print("Machine Specifications:\n")
-    print(f"CPU: {cpu_name} ({cores} cores / {threads} threads)")
-    print(f"Max CPU frequency: {int(freq_max)} MHz")
-    print(f"Installed RAM: {installed_ram} GB")
-    print(f"Usable RAM: ~{usable_ram} GB")
-    print(f"Architecture: {arch}")
-    print(f"Operating System: {os_version}")
-    print(f"Python Version: {python_version}")
-    print(f"Interpreter: {interpreter}")
-
-print_machine_spec()
-
+    logger.info("Machine Specifications:")
+    logger.info(f"CPU: {cpu_name} ({cores} cores / {threads} threads)")
+    logger.info(f"Max CPU frequency: {int(freq_max)} MHz")
+    logger.info(f"Installed RAM: {installed_ram} GB")
+    logger.info(f"Usable RAM: ~{usable_ram} GB")
+    logger.info(f"Architecture: {arch}")
+    logger.info(f"Operating System: {os_version}")
+    logger.info(f"Python Version: {python_version}")
+    logger.info(f"Interpreter: {interpreter}")

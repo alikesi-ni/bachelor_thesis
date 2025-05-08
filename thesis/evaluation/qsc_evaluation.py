@@ -123,7 +123,7 @@ class QscEvaluation:
                 "feature_dim": fv_matrix.shape[1] - 1,
                 "max_q_error": max_q_error,
                 "partition_count": len(qsc.partitions),
-                "witness_pair_count": 0,  # Optional: if you want to count witnesses, can add here
+                "witness_pair_count": witness_pair_count,
                 "calculation_time_in_seconds": elapsed_time
             }
 

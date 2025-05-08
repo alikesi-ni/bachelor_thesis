@@ -130,8 +130,9 @@ class QscEvaluation:
             # --- Save FV ---
             fvm_filename = f"step_{current_step}.pkl"
             fvm_path = os.path.join(fvm_dir, fvm_filename)
+            fvm_difference = fv_matrix[:, -len(qsc.partitions):]
             with open(fvm_path, "wb") as f:
-                pickle.dump((fv_matrix, params), f)
+                pickle.dump((fvm_difference, params), f)
 
             self.logger.info(
                 f"Saved feature vector for step={current_step} "

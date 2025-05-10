@@ -209,7 +209,7 @@ class QscEvaluation:
         with open(os.path.join(self.data_dir_path, "qsc.pkl"), "wb") as f:
             pickle.dump(qsc, f)
 
-        self._do_common_workflow(q, max_step, qsc)
+        self._do_common_workflow(q, max_step, max_color_count, qsc)
 
     def _do_common_workflow(self, q, max_step, max_color_count, qsc):
         self.last_completed_step = qsc.current_step

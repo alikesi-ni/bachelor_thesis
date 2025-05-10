@@ -37,8 +37,12 @@ for dataset_name in dataset_names:
     disjoint_graph = nx.disjoint_union_all(graphs)
     graph_id_label_map = {g.graph["graph_id"]: g.graph["graph_label"] for g in graphs}
 
-    evaluation_parameters = EvaluationParameters(method="h_grid", h_grid=list(range(0,11)), q_strictly_descending=False, include_inbetween_steps=True)
+    # evaluation_parameters = EvaluationParameters(method="h_grid", h_grid=list(range(0,11)),
+    #                                              q_strictly_descending=False, include_inbetween_steps=True)
+    evaluation_parameters = EvaluationParameters(method="q_half",
+                                                 q_strictly_descending=False, include_inbetween_steps=True)
 
     qsc_evaluation = QscEvaluation(dataset_name, disjoint_graph, graph_id_label_map, evaluation_parameters,
                                    base_dir="../../evaluation-results")
     print(evaluation_parameters.to_dirname())
+    qsc_evaluation.evaluate()

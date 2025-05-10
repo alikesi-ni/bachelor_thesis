@@ -12,6 +12,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import cosine_similarity
 
 from thesis.evaluation.evaluation_parameters import EvaluationParameters
+from thesis.evaluation.utils import stitch_feature_vectors
 from thesis.utils.logger_config import LoggerFactory
 from tests.test_print_system_info import log_machine_spec
 
@@ -84,33 +85,40 @@ class QscEvaluation:
         self.logger.info("Algorithm: QSC")
         self.logger.info(f"Evaluation: {parameters.to_dirname()}")
         self.logger.info("--------------------")
+        self.logger.info("Parameter and associated steps:")
+        for param, associated_steps in self.parameters.parameter_associated_steps:
+            self.logger.info(f"  param={param} -> steps={associated_steps}")
+        self.logger.info("--------------------")
 
     def evaluate(self):
-        self.logger.info(f"Evaluation Parameters: C={self.c_grid}, folds={self.folds}, repeats={self.repeats}, start_repeat={self.start_repeat}")
+        self.logger.info(
+            f"Evaluation Parameters: C={self.c_grid}, folds={self.folds}, repeats={self.repeats}, start_repeat={self.start_repeat}")
 
         with open(self.train_path, "w", newline="") as f_train, open(self.test_path, "w", newline="") as f_test:
             writer_train = csv.writer(f_train)
             writer_test = csv.writer(f_test)
 
-            writer_train.writerow(["trial", "fold", "C", "step_set", "accuracy", "n_colors", "q_error"])
-            writer_test.writerow(["trial", "fold", "C", "step_set", "accuracy", "n_colors", "q_error"])
+            writer_train.writerow(["trial", "fold", "C", "param", "accuracy"])
+            writer_test.writerow(["trial", "fold", "C", "param", "accuracy"])
 
             for trial in range(self.start_repeat, self.repeats + 1):
                 outer_cv = StratifiedKFold(n_splits=self.folds, shuffle=True, random_state=trial)
                 self.logger.info(f"[trial {trial}] Starting outer cross-validation")
 
-                for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(self.graph_ids, self.graph_labels), 1):
+                for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(self.graph_ids, self.graph_labels),
+                                                                   1):
                     x_train, y_train = self.graph_ids[train_idx], self.graph_labels[train_idx]
                     x_test, y_test = self.graph_ids[test_idx], self.graph_labels[test_idx]
 
                     best_score = -1
                     best_params = None
 
-                    for step_set in self.parameters.step_sets:
+                    for param, associated_steps in self.parameters.parameter_associated_steps:
                         try:
-                            fv_matrix, params = self.stitch_feature_vectors(step_set)
+                            fv_matrix = stitch_feature_vectors(self.data_dir_path, associated_steps)
                         except FileNotFoundError:
-                            self.logger.warning(f"Feature vectors for step set {step_set} not found. Skipping.")
+                            self.logger.warning(
+                                f"Feature vectors for steps={associated_steps} (param={param}) not found. Skipping.")
                             continue
 
                         for C in self.c_grid:
@@ -133,23 +141,24 @@ class QscEvaluation:
                                 inner_accuracies.append(acc)
 
                             avg_inner_acc = np.mean(inner_accuracies)
-                            writer_train.writerow([trial, outer_fold, C, step_set, avg_inner_acc,
-                                                   params['partition_count'], params['max_q_error']])
+                            writer_train.writerow([trial, outer_fold, C, param, avg_inner_acc])
                             f_train.flush()
 
-                            self.logger.info(f"[trial {trial} fold {outer_fold}] step_set={step_set} C={C} "
+                            self.logger.info(f"[trial {trial} fold {outer_fold}] param={param} C={C} "
                                              f"Avg Inner Acc={avg_inner_acc:.4f}")
 
                             if avg_inner_acc > best_score:
                                 best_score = avg_inner_acc
-                                best_params = (step_set, C, params)
+                                best_params = (param, C)
 
                     if best_params is None:
-                        self.logger.warning(f"No valid parameter combination found for trial {trial} fold {outer_fold}. Skipping.")
+                        self.logger.warning(
+                            f"No valid parameter combination found for trial {trial} fold {outer_fold}. Skipping.")
                         continue
 
-                    step_best, C_best, params_best = best_params
-                    fv_matrix, _ = self.stitch_feature_vectors(step_best)
+                    param_best, C_best = best_params
+                    associated_steps_best = dict(self.parameters.parameter_associated_steps)[param_best]
+                    fv_matrix = stitch_feature_vectors(self.data_dir_path, associated_steps_best)
 
                     K_train = cosine_similarity(fv_matrix[x_train], fv_matrix[x_train])
                     K_test = cosine_similarity(fv_matrix[x_test], fv_matrix[x_train])
@@ -159,12 +168,11 @@ class QscEvaluation:
                     y_pred = model.predict(K_test)
                     test_acc = accuracy_score(y_test, y_pred) * 100
 
-                    writer_test.writerow([trial, outer_fold, C_best, step_best, test_acc,
-                                          params_best['partition_count'], params_best['max_q_error']])
+                    writer_test.writerow([trial, outer_fold, C_best, param_best, test_acc])
                     f_test.flush()
 
-                    self.logger.info(f"[trial {trial} fold {outer_fold}] BEST C={C_best} step_set={step_best} "
-                                     f"Outer Test Acc={test_acc:.4f} "
-                                     f"(n_colors={params_best['partition_count']}, q_error={params_best['max_q_error']:.4f})")
+                    self.logger.info(f"[trial {trial} fold {outer_fold}] BEST param={param_best} C={C_best} "
+                                     f"Outer Test Acc={test_acc:.4f}")
 
         self.logger.info("Evaluation complete.")
+

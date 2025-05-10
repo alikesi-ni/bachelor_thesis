@@ -1,8 +1,10 @@
 import os
+import pickle
 import string
 from typing import List
 
 import pandas as pd
+from scipy.sparse import hstack
 
 
 def pick_steps_q_half(data_dir_path: string, q_strictly_descending: bool = True, include_inbetween_steps: bool = False):
@@ -74,9 +76,22 @@ def pick_steps_h_grid(data_dir_path: string, h_grid: List[int], q_strictly_desce
 
     return parameter_associated_steps
 
-def get_feature_vector_matrix(data_dir_path: string,step_set: List[int]):
+def stitch_feature_vectors(data_dir_path: string, associated_steps: List[int]):
     fvm_dir_path = os.path.join(data_dir_path, "feature_vector_matrices")
 
+    fvm = None
+
+    for step in associated_steps:
+        fv_filename = os.path.join(fvm_dir_path, f"step_{step}.pkl")
+        with open(fv_filename, "rb") as f:
+            single_step_fvm, _ = pickle.load(f)
+
+        if fvm is None:
+            fvm = single_step_fvm
+        else:
+            fvm = hstack([fvm, single_step_fvm])
+
+    return fvm.tocsr()
 
 
 def check_fvm_and_refinement_results(data_dir_path: string):

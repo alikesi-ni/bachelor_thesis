@@ -47,16 +47,16 @@ class QscEvaluation:
         self.logger.info("--------------------")
         self.path_to_qsc_graph = None
 
-    def refine_and_create_feature_vector_matrices(self, max_step=np.inf, q: int = 1):
+    def refine_and_create_feature_vector_matrices(self, max_step=np.inf, q: int = 1, max_color_count: int =4096):
         fvm_dir_exists = os.path.exists(self.fvm_dir_path)
         qsc_file_exists = os.path.isfile(self.qsc_file_path)
         refinement_results_exists = os.path.exists(self.refinement_results_file_path)
         if not fvm_dir_exists and not qsc_file_exists and not refinement_results_exists:
-            self._do_normal_workflow(q, max_step)
+            self._do_normal_workflow(q, max_step, max_color_count)
         else:
-            self._do_load_workflow(q, max_step)
+            self._do_load_workflow(q, max_step, max_color_count)
 
-    def _do_load_workflow(self, q, max_step):
+    def _do_load_workflow(self, q, max_step, max_color_count):
         if not os.path.exists(self.fvm_dir_path):
             self.logger.error(f"Aborting: feature_vector_matrices folder not found.")
             return
@@ -144,10 +144,10 @@ class QscEvaluation:
 
         self.logger.info(f"Step {current_step}: all files and logs match the current QSC state. Continuing...")
 
-        self._do_common_workflow(q, max_step, qsc)
+        self._do_common_workflow(q, max_step, max_color_count, qsc)
 
 
-    def _do_normal_workflow(self, q, max_step):
+    def _do_normal_workflow(self, q, max_step, max_color_count):
         cg = ColoredGraph(self.disjoint_graph.copy())
         qsc = QuasiStableColoringGraph(
             cg,
@@ -211,10 +211,10 @@ class QscEvaluation:
 
         self._do_common_workflow(q, max_step, qsc)
 
-    def _do_common_workflow(self, q, max_step, qsc):
+    def _do_common_workflow(self, q, max_step, max_color_count, qsc):
         self.last_completed_step = qsc.current_step
         self.last_max_q_error = qsc.current_max_q_error
-        while self.last_completed_step < max_step and self.last_max_q_error > q:
+        while self.last_completed_step < max_step and self.last_max_q_error > q and len(qsc.partitions) < max_color_count:
 
             start_time = time.time()
             self.logger.info(f"Refining for step={self.last_completed_step + 1}...")

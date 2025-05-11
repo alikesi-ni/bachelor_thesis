@@ -12,7 +12,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import cosine_similarity
 
 from thesis.evaluation.evaluation_parameters import EvaluationParameters
-from thesis.evaluation.utils import stitch_feature_vectors
+from thesis.evaluation.utils import stitch_feature_vectors, generate_report
 from thesis.utils.logger_config import LoggerFactory
 from tests.test_print_system_info import log_machine_spec
 
@@ -174,5 +174,9 @@ class QscEvaluation:
                     self.logger.info(f"[trial {trial} fold {outer_fold}] BEST param={param_best} C={C_best} "
                                      f"Outer Test Acc={test_acc:.4f}")
 
+        accuracy, std = generate_report(self.eval_output_dir, self.eval_output_dir)
         self.logger.info("Evaluation complete.")
+        self.logger.info(f"Mean accuracy: {accuracy:.2f} +- {std:.2f}")
+        self.logger.info("--------------------")
+        return accuracy, std
 

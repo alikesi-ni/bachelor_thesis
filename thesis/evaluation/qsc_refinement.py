@@ -28,8 +28,6 @@ class QscRefinement:
         self.fvm_dir_path = os.path.join(self.data_dir_path, "feature_vector_matrices")
         self.qsc_file_path = os.path.join(self.data_dir_path, "qsc.pkl")
         self.refinement_results_file_path = os.path.join(self.data_dir_path, "refinement_results.csv")
-        train_filename = os.path.join(self.data_dir_path, "train_results.csv")
-        test_file_path = os.path.join(self.data_dir_path, "test_results.csv")
         log_file_path = os.path.join(self.data_dir_path, "evaluation_log.txt")
         log_file_exists = False
         if os.path.exists(log_file_path):
@@ -186,11 +184,10 @@ class QscRefinement:
             f"calculation_time={params['calculation_time_in_seconds']:.6f} s)"
         )
 
-        # save refinement results
+        # write to csv
         with open(self.refinement_results_file_path, "w", newline="") as f_refine:
             writer = csv.writer(f_refine)
 
-            # Write header only if new
             writer.writerow([
                 "step", "feature_dim", "max_q_error",
                 "partition_count", "witness_pair_count",
@@ -205,7 +202,7 @@ class QscRefinement:
                 params["calculation_time_in_seconds"]
             ])
 
-        # save latest QuasiStableColoringGraph
+        # save qsc
         with open(os.path.join(self.data_dir_path, "qsc.pkl"), "wb") as f:
             pickle.dump(qsc, f)
 
@@ -233,7 +230,7 @@ class QscRefinement:
                 "calculation_time_in_seconds": elapsed_time
             }
 
-            # --- Save FV ---
+            # save feature vector matrix
             fvm_filename = f"step_{current_step}.pkl"
             fvm_path = os.path.join(self.fvm_dir_path, fvm_filename)
             fvm_difference = fv_matrix[:, -len(qsc.partitions):]
@@ -249,7 +246,7 @@ class QscRefinement:
                 f"time={params['calculation_time_in_seconds']:.6f} s)"
             )
 
-            # --- Append to CSV ---
+            # write to csv
             with open(self.refinement_results_file_path, "a", newline="") as f_refine:
                 writer = csv.writer(f_refine)
                 writer.writerow([
@@ -261,11 +258,10 @@ class QscRefinement:
                     params["calculation_time_in_seconds"]
                 ])
 
-            # --- Save updated QSC object ---
+            # save updated qsc object
             with open(os.path.join(self.data_dir_path, "qsc.pkl"), "wb") as f:
                 pickle.dump(qsc, f)
 
-            # --- Update for the next loop iteration ---
             self.last_completed_step = current_step
             self.last_max_q_error = max_q_error
 

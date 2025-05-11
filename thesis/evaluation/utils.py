@@ -1,7 +1,7 @@
 import os
 import pickle
 import string
-from typing import List
+from typing import List, Tuple
 
 import pandas as pd
 from scipy.sparse import hstack
@@ -45,7 +45,38 @@ def pick_steps_q_half(data_dir_path: string, q_strictly_descending: bool = True,
 
     return parameter_associated_steps
 
-def pick_steps_h_grid(data_dir_path: string, h_grid: List[int], q_strictly_descending: bool = False, include_inbetween_steps: bool = True):
+
+def pick_steps_q_ratio(data_dir_path: str, q_ratio: float = 0.5, allow_duplicate_steps: bool = False) \
+        -> List[Tuple[int, List[int]]]:
+    fvm_dir_path = os.path.join(data_dir_path, "feature_vector_matrices")
+    refinement_results_file_path = os.path.join(data_dir_path, "refinement_results.csv")
+    assert os.path.exists(fvm_dir_path)
+    assert os.path.isfile(refinement_results_file_path)
+
+    df = pd.read_csv(refinement_results_file_path)
+    df = filter_q_descending(df)
+
+    base_q = df.loc[df["step"] == 0, "max_q_error"].values[0]
+    threshold = base_q * q_ratio
+    anchor_steps = [0]
+
+    for _, row in df.iterrows():
+        if row["max_q_error"] <= threshold:
+            step = int(row["step"])
+            if allow_duplicate_steps or step != anchor_steps[-1]:
+                anchor_steps.append(step)
+                threshold *= q_ratio
+
+    list_param_steps = []
+    for i, step in enumerate(anchor_steps):
+        associated_steps = anchor_steps[:i + 1]
+        list_param_steps.append((i, associated_steps))
+
+    return list_param_steps
+
+
+def pick_steps_h_grid(data_dir_path: string, h_grid: List[int], q_strictly_descending: bool = False) \
+        -> List[Tuple[int, List[int]]]:
     fvm_dir_path = os.path.join(data_dir_path, "feature_vector_matrices")
     refinement_results_file_path = os.path.join(data_dir_path, "refinement_results.csv")
     assert os.path.exists(fvm_dir_path)
@@ -53,28 +84,16 @@ def pick_steps_h_grid(data_dir_path: string, h_grid: List[int], q_strictly_desce
     df = pd.read_csv(refinement_results_file_path)
 
     if q_strictly_descending:
-        filtered_rows = [df.iloc[0]]
-        last_q = df.loc[0, "max_q_error"]
+        df = filter_q_descending(df)
 
-        for i in range(1, len(df)):
-            current_q = df.loc[i, "max_q_error"]
-            if current_q < last_q:  # strictly descending
-                filtered_rows.append(df.iloc[i])
-                last_q = current_q
-
-        df = pd.DataFrame(filtered_rows)
-
-    parameter_associated_steps = []
+    list_param_steps = []
     for i in h_grid:
         if i >= len(df):
             continue  # skip invalid indices
-        if include_inbetween_steps:
-            associated_steps = df.iloc[:i + 1]["step"].astype(int).tolist()
-        else:
-            associated_steps = df.iloc[h_grid[:h_grid.index(i) + 1]]["step"].astype(int).tolist()
-        parameter_associated_steps.append((i, associated_steps))
+        associated_steps = df.iloc[:i + 1]["step"].astype(int).tolist()
+        list_param_steps.append((i, associated_steps))
 
-    return parameter_associated_steps
+    return list_param_steps
 
 def stitch_feature_vectors(data_dir_path: string, associated_steps: List[int]):
     fvm_dir_path = os.path.join(data_dir_path, "feature_vector_matrices")
@@ -92,6 +111,18 @@ def stitch_feature_vectors(data_dir_path: string, associated_steps: List[int]):
             fvm = hstack([fvm, single_step_fvm])
 
     return fvm.tocsr()
+
+def filter_q_descending(df: pd.DataFrame):
+    filtered_rows = [df.iloc[0]]
+    last_q = df.loc[0, "max_q_error"]
+
+    for i in range(1, len(df)):
+        current_q = df.loc[i, "max_q_error"]
+        if current_q < last_q:  # strictly descending
+            filtered_rows.append(df.iloc[i])
+            last_q = current_q
+
+    return pd.DataFrame(filtered_rows)
 
 
 def generate_report(data_dir_path: str, output_dir: str):

@@ -1,8 +1,11 @@
+import math
+
 import networkx as nx
 import numpy as np
 
 from thesis.evaluation.evaluation_parameters import EvaluationParameters
 from thesis.evaluation.qsc_evaluation import QscEvaluation
+from thesis.evaluation.step_settings import StepSettings
 from thesis.evaluation.utils import generate_report
 from thesis.utils.read_data_utils import dataset_to_graphs
 
@@ -18,17 +21,17 @@ dataset_names = [
     "REDDIT-BINARY",
 
     # # medium datsets
-    "IMDB-BINARY",
+    # "IMDB-BINARY",
     # "NCI1",
 
     # # social network datasets
     # "EGO-1",
     # "EGO-2",
-    "EGO-3",
+    # "EGO-3",
     # "EGO-4",
 
     # # new datasets
-    "ENZYMES",
+    # "ENZYMES",
     # "PROTEINS"
 ]
 
@@ -38,25 +41,27 @@ for dataset_name in dataset_names:
     disjoint_graph = nx.disjoint_union_all(graphs)
     graph_id_label_map = {g.graph["graph_id"]: g.graph["graph_label"] for g in graphs}
 
-    evaluation_parameters_list = [
+    step_settings = [
         # EvaluationParameters(method="h_grid", h_grid=list(range(0, 33)), q_strictly_descending=False, include_inbetween_steps=True),
         # EvaluationParameters(method="h_grid", h_grid=list(range(0, 33)), q_strictly_descending=True, include_inbetween_steps=True),
-        EvaluationParameters(method="q_half", q_strictly_descending=True, include_inbetween_steps=False),
-        EvaluationParameters(method="h_grid", h_grid=list(range(0, 17)) + [32, 64, 128, 256], q_strictly_descending=True, include_inbetween_steps=True),
-        EvaluationParameters(method="h_grid", h_grid=list(range(0, 17)) + [32, 64, 128, 256], q_strictly_descending=False, include_inbetween_steps=True),
+        StepSettings(method="q_ratio", method_params={"q_ratio": 0.3, "allow_duplicate_steps": True}),
+        StepSettings(method="q_ratio", method_params={"q_ratio": 0.5, "allow_duplicate_steps": True}),
+        StepSettings(method="q_ratio", method_params={"q_ratio": 0.7, "allow_duplicate_steps": True}),
+        # StepSettings(method="h_grid", method_params={"h_grid": list(range(0, 17)) + [32, 64, 128, 256], "q_strictly_descending": True}),
+        # StepSettings(method="h_grid", method_params={"h_grid": list(range(0, 17)) + [32, 64, 128, 256], "q_strictly_descending": False}),
     ]
 
     best_accuracy = 0
     best_std = np.inf
     best_parameters = ""
-    for parameters in evaluation_parameters_list:
-        qsc_evaluation = QscEvaluation(dataset_name, disjoint_graph, graph_id_label_map, parameters,
+    for step_setting in step_settings:
+        qsc_evaluation = QscEvaluation(dataset_name, disjoint_graph, graph_id_label_map, step_setting,
                                        base_dir="../../evaluation-results")
         accuracy, std = qsc_evaluation.evaluate()
         if accuracy > best_accuracy:
             best_accuracy = accuracy
             best_std = std
-            best_parameters = parameters.to_dirname()
+            best_parameters = step_setting.to_dirname()
 
     print(f"BEST PARAMETERS: {best_parameters}")
     print(f"BEST ACCURACY: {best_accuracy:.2f} +- {best_std:.2f}")

@@ -12,6 +12,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import cosine_similarity
 
 from thesis.evaluation.evaluation_parameters import EvaluationParameters
+from thesis.evaluation.step_settings import StepSettings
 from thesis.evaluation.utils import stitch_feature_vectors, generate_report
 from thesis.utils.logger_config import LoggerFactory
 from tests.test_print_system_info import log_machine_spec
@@ -23,7 +24,7 @@ class QscEvaluation:
         dataset_name: str,
         disjoint_graph: nx.Graph,
         graph_id_label_map: dict[int, int],
-        parameters: EvaluationParameters,
+        step_settings: StepSettings,
         c_grid: Optional[list[float]] = None,
         folds: int = 10,
         repeats: int = 10,
@@ -38,7 +39,7 @@ class QscEvaluation:
 
         self.dataset_name = dataset_name
         self.disjoint_graph = disjoint_graph
-        self.parameters = parameters
+        self.step_settings = step_settings
         self.c_grid = c_grid
         self.folds = folds
         self.repeats = repeats
@@ -61,9 +62,7 @@ class QscEvaluation:
         if not os.path.isfile(self.refinement_results_file_path):
             raise FileNotFoundError("Missing refinement_results.csv.")
 
-        parameters.set_data_dir_path(self.data_dir_path)
-
-        self.eval_output_dir = os.path.join(self.data_dir_path, parameters.to_dirname())
+        self.eval_output_dir = os.path.join(self.data_dir_path, step_settings.to_dirname())
         os.makedirs(self.eval_output_dir, exist_ok=True)
 
         self.train_path = os.path.join(self.eval_output_dir, "train_results.csv")
@@ -83,11 +82,11 @@ class QscEvaluation:
         self.logger.info("--------------------")
         self.logger.info(f"Dataset: {dataset_name}")
         self.logger.info("Algorithm: QSC")
-        self.logger.info(f"Evaluation: {parameters.to_dirname()}")
+        self.logger.info(f"Evaluation: {step_settings.to_dirname()}")
         self.logger.info("--------------------")
         self.logger.info("Parameter and associated steps:")
-        for param, associated_steps in self.parameters.parameter_associated_steps:
-            self.logger.info(f"  param={param} -> steps={associated_steps}")
+        for param, steps in self.step_settings.get_list_param_steps(self.data_dir_path):
+            self.logger.info(f"  param={param} -> steps={steps}")
         self.logger.info("--------------------")
 
     def evaluate(self):
@@ -113,12 +112,12 @@ class QscEvaluation:
                     best_score = -1
                     best_params = None
 
-                    for param, associated_steps in self.parameters.parameter_associated_steps:
+                    for param, steps in self.step_settings.get_list_param_steps(self.data_dir_path):
                         try:
-                            fv_matrix = stitch_feature_vectors(self.data_dir_path, associated_steps)
+                            fv_matrix = stitch_feature_vectors(self.data_dir_path, steps)
                         except FileNotFoundError:
                             self.logger.warning(
-                                f"Feature vectors for steps={associated_steps} (param={param}) not found. Skipping.")
+                                f"Feature vectors for steps={steps} (param={param}) not found. Skipping.")
                             continue
 
                         for C in self.c_grid:
@@ -157,8 +156,8 @@ class QscEvaluation:
                         continue
 
                     param_best, C_best = best_params
-                    associated_steps_best = dict(self.parameters.parameter_associated_steps)[param_best]
-                    fv_matrix = stitch_feature_vectors(self.data_dir_path, associated_steps_best)
+                    steps_best = dict(self.step_settings.get_list_param_steps(self.data_dir_path))[param_best]
+                    fv_matrix = stitch_feature_vectors(self.data_dir_path, steps_best)
 
                     K_train = cosine_similarity(fv_matrix[x_train], fv_matrix[x_train])
                     K_test = cosine_similarity(fv_matrix[x_test], fv_matrix[x_train])

@@ -45,8 +45,8 @@ for dataset_name in dataset_names:
         # EvaluationParameters(method="h_grid", h_grid=list(range(0, 33)), q_strictly_descending=False, include_inbetween_steps=True),
         # EvaluationParameters(method="h_grid", h_grid=list(range(0, 33)), q_strictly_descending=True, include_inbetween_steps=True),
         StepSettings(method="q_ratio", method_params={"q_ratio": 0.3, "allow_duplicate_steps": True}),
-        StepSettings(method="q_ratio", method_params={"q_ratio": 0.5, "allow_duplicate_steps": True}),
-        StepSettings(method="q_ratio", method_params={"q_ratio": 0.7, "allow_duplicate_steps": True}),
+        # StepSettings(method="q_ratio", method_params={"q_ratio": 0.5, "allow_duplicate_steps": True}),
+        # StepSettings(method="q_ratio", method_params={"q_ratio": 0.7, "allow_duplicate_steps": True}),
         # StepSettings(method="h_grid", method_params={"h_grid": list(range(0, 17)) + [32, 64, 128, 256], "q_strictly_descending": True}),
         # StepSettings(method="h_grid", method_params={"h_grid": list(range(0, 17)) + [32, 64, 128, 256], "q_strictly_descending": False}),
     ]

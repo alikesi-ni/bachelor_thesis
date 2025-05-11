@@ -6,6 +6,7 @@ from typing import Optional
 
 import numpy as np
 import networkx as nx
+import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
@@ -91,14 +92,30 @@ class QscEvaluation:
 
     def evaluate(self):
         self.logger.info(
-            f"Evaluation Parameters: C={self.c_grid}, folds={self.folds}, repeats={self.repeats}, start_repeat={self.start_repeat}")
+            f"Evaluation Parameters: C={self.c_grid}, folds={self.folds}, repeats={self.repeats}, start_repeat={self.start_repeat}"
+        )
 
-        with open(self.train_path, "w", newline="") as f_train, open(self.test_path, "w", newline="") as f_test:
+        existing_results = set()
+
+        # load existing test results if available
+        if os.path.exists(self.test_path):
+            try:
+                df_existing = pd.read_csv(self.test_path)
+                for _, row in df_existing.iterrows():
+                    existing_results.add((int(row["trial"]), int(row["fold"])))
+                self.logger.info(f"Loaded {len(existing_results)} completed (trial, fold) pairs.")
+            except Exception as e:
+                self.logger.warning(f"Failed to load existing test results: {e}")
+
+        with open(self.train_path, "a", newline="") as f_train, open(self.test_path, "a", newline="") as f_test:
             writer_train = csv.writer(f_train)
             writer_test = csv.writer(f_test)
 
-            writer_train.writerow(["trial", "fold", "C", "param", "accuracy"])
-            writer_test.writerow(["trial", "fold", "C", "param", "accuracy"])
+            # write headers if empty
+            if os.path.getsize(self.train_path) == 0:
+                writer_train.writerow(["trial", "fold", "C", "param", "accuracy"])
+            if os.path.getsize(self.test_path) == 0:
+                writer_test.writerow(["trial", "fold", "C", "param", "accuracy"])
 
             for trial in range(self.start_repeat, self.repeats + 1):
                 outer_cv = StratifiedKFold(n_splits=self.folds, shuffle=True, random_state=trial)
@@ -106,6 +123,28 @@ class QscEvaluation:
 
                 for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(self.graph_ids, self.graph_labels),
                                                                    1):
+                    if (trial, outer_fold) in existing_results:
+                        self.logger.info(f"[trial {trial} fold {outer_fold}] Already completed. Skipping.")
+                        continue
+
+                    # Remove outdated training rows for this trial/fold and beyond
+                    if os.path.exists(self.train_path):
+                        df_train = pd.read_csv(self.train_path)
+                        df_train_filtered = df_train[
+                            ~((df_train["trial"] == trial) & (df_train["fold"] >= outer_fold))
+                        ]
+                        with open(self.train_path, "w", newline="") as f_train_filtered:
+                            writer = csv.writer(f_train_filtered)
+                            writer.writerow(["trial", "fold", "C", "param", "accuracy"])
+                            for _, row in df_train_filtered.iterrows():
+                                writer.writerow([
+                                    int(row["trial"]),
+                                    int(row["fold"]),
+                                    float(row["C"]),
+                                    int(row["param"]),
+                                    float(row["accuracy"])
+                                ])
+
                     x_train, y_train = self.graph_ids[train_idx], self.graph_labels[train_idx]
                     x_test, y_test = self.graph_ids[test_idx], self.graph_labels[test_idx]
 
@@ -173,9 +212,16 @@ class QscEvaluation:
                     self.logger.info(f"[trial {trial} fold {outer_fold}] BEST param={param_best} C={C_best} "
                                      f"Outer Test Acc={test_acc:.4f}")
 
-        accuracy, std = generate_report(self.eval_output_dir, self.eval_output_dir)
-        self.logger.info("Evaluation complete.")
-        self.logger.info(f"Mean accuracy: {accuracy:.2f} +- {std:.2f}")
-        self.logger.info("--------------------")
-        return accuracy, std
+        # Only generate report if it doesn't already exist
+        report_path = os.path.join(self.eval_output_dir, "report.txt")
+        if not os.path.exists(report_path):
+            accuracy, std = generate_report(self.eval_output_dir, self.eval_output_dir)
+            self.logger.info("Evaluation complete.")
+            self.logger.info(f"Mean accuracy: {accuracy:.2f} ± {std:.2f}")
+            self.logger.info("--------------------")
+            return accuracy, std
+        else:
+            self.logger.info("Evaluation already complete — report exists.")
+            return None, None
+
 

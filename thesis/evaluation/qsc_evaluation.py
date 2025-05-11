@@ -129,21 +129,28 @@ class QscEvaluation:
 
                     # Remove outdated training rows for this trial/fold and beyond
                     if os.path.exists(self.train_path):
-                        df_train = pd.read_csv(self.train_path)
-                        df_train_filtered = df_train[
-                            ~((df_train["trial"] == trial) & (df_train["fold"] >= outer_fold))
-                        ]
-                        with open(self.train_path, "w", newline="") as f_train_filtered:
-                            writer = csv.writer(f_train_filtered)
-                            writer.writerow(["trial", "fold", "C", "param", "accuracy"])
-                            for _, row in df_train_filtered.iterrows():
-                                writer.writerow([
-                                    int(row["trial"]),
-                                    int(row["fold"]),
-                                    float(row["C"]),
-                                    int(row["param"]),
-                                    float(row["accuracy"])
-                                ])
+                        with open(self.train_path, "r", newline="") as f:
+                            lines = f.readlines()
+
+                        if len(lines) > 1:
+                            df_train = pd.read_csv(self.train_path)
+                            df_train_filtered = df_train[
+                                ~((df_train["trial"] == trial) & (df_train["fold"] >= outer_fold))
+                            ]
+                            with open(self.train_path, "w", newline="") as f_train_filtered:
+                                writer = csv.writer(f_train_filtered)
+                                writer.writerow(["trial", "fold", "C", "param", "accuracy"])
+                                for _, row in df_train_filtered.iterrows():
+                                    writer.writerow([
+                                        int(row["trial"]),
+                                        int(row["fold"]),
+                                        float(row["C"]),
+                                        int(row["param"]),
+                                        float(row["accuracy"])
+                                    ])
+                        else:
+                            self.logger.info(
+                                f"Skipping train cleanup — {self.train_path} contains only headers or is empty.")
 
                     x_train, y_train = self.graph_ids[train_idx], self.graph_labels[train_idx]
                     x_test, y_test = self.graph_ids[test_idx], self.graph_labels[test_idx]

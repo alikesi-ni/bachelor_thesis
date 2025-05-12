@@ -1,12 +1,8 @@
-import math
-
 import networkx as nx
 import numpy as np
 
-from thesis.evaluation.evaluation_parameters import EvaluationParameters
 from thesis.evaluation.qsc_evaluation import QscEvaluation
 from thesis.evaluation.step_settings import StepSettings
-from thesis.evaluation.utils import generate_report
 from thesis.utils.read_data_utils import dataset_to_graphs
 
 dataset_names = [
@@ -18,7 +14,7 @@ dataset_names = [
     # # large datasets
     # "COLLAB",
     # "DD",
-    "REDDIT-BINARY",
+    # "REDDIT-BINARY",
 
     # # medium datsets
     # "IMDB-BINARY",
@@ -42,13 +38,11 @@ for dataset_name in dataset_names:
     graph_id_label_map = {g.graph["graph_id"]: g.graph["graph_label"] for g in graphs}
 
     step_settings = [
-        # EvaluationParameters(method="h_grid", h_grid=list(range(0, 33)), q_strictly_descending=False, include_inbetween_steps=True),
-        # EvaluationParameters(method="h_grid", h_grid=list(range(0, 33)), q_strictly_descending=True, include_inbetween_steps=True),
         StepSettings(method="q_ratio", method_params={"q_ratio": 0.3, "allow_duplicate_steps": True}),
-        # StepSettings(method="q_ratio", method_params={"q_ratio": 0.5, "allow_duplicate_steps": True}),
-        # StepSettings(method="q_ratio", method_params={"q_ratio": 0.7, "allow_duplicate_steps": True}),
-        # StepSettings(method="h_grid", method_params={"h_grid": list(range(0, 17)) + [32, 64, 128, 256], "q_strictly_descending": True}),
-        # StepSettings(method="h_grid", method_params={"h_grid": list(range(0, 17)) + [32, 64, 128, 256], "q_strictly_descending": False}),
+        StepSettings(method="q_ratio", method_params={"q_ratio": 0.5, "allow_duplicate_steps": True}),
+        StepSettings(method="q_ratio", method_params={"q_ratio": 0.7, "allow_duplicate_steps": True}),
+        StepSettings(method="h_grid", method_params={"h_grid": list(range(0, 17)) + [32, 64, 128, 256], "q_strictly_descending": True}),
+        StepSettings(method="h_grid", method_params={"h_grid": list(range(0, 17)) + [32, 64, 128, 256], "q_strictly_descending": False}),
     ]
 
     best_accuracy = 0
@@ -65,5 +59,3 @@ for dataset_name in dataset_names:
 
     print(f"BEST PARAMETERS: {best_parameters}")
     print(f"BEST ACCURACY: {best_accuracy:.2f} +- {best_std:.2f}")
-    # eval_output_dir = "../../evaluation-results/QSC-EGO-2/h_grid__0-1-2-3-4-5-6-7-8-9-10__with_inbetween__without_desc"
-    # generate_report(eval_output_dir, eval_output_dir)

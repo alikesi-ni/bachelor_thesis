@@ -11,7 +11,7 @@ dataset_names = [
     # "MSRC_9",
 
     # # large datasets
-    # "COLLAB",
+    "COLLAB",
     # "DD",
     # "REDDIT-BINARY",
 
@@ -32,11 +32,11 @@ dataset_names = [
 
 for dataset_name in dataset_names:
 
-    graphs = dataset_to_graphs("../../data", dataset_name)
+    graphs = dataset_to_graphs("../../../data", dataset_name)
     disjoint_graph = nx.disjoint_union_all(graphs)
     graph_id_label_map = {g.graph["graph_id"]: g.graph["graph_label"] for g in graphs}
 
     max_step = np.inf
 
-    qsc_evaluation = QscRefinement(dataset_name, disjoint_graph, graph_id_label_map)
-    qsc_evaluation.refine_and_create_feature_vector_matrices(q=0)
+    qsc_refinement = QscRefinement(dataset_name, disjoint_graph, graph_id_label_map, base_dir="../../evaluation-results")
+    qsc_refinement.refine_and_create_feature_vector_matrices(q=0)

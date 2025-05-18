@@ -5,7 +5,7 @@ from thesis.evaluation.utils import pick_steps_h_grid, pick_steps_q_half
 
 
 @dataclass
-class EvaluationParameters:
+class QscEvaluationParameters:
     method: Literal["q_half", "h_grid"]  # Specifies which method to use
     q_strictly_descending: bool = True
     include_inbetween_steps: bool = False

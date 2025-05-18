@@ -41,11 +41,11 @@ class QscRefinement:
         log_machine_spec(self.logger)
         self.logger.info("--------------------")
         self.logger.info(f"Dataset: {dataset_name}")
-        self.logger.info("Algorithm: QSC")
+        self.logger.info("Algorithm: QSC (Quasi-Stable Coloring")
         self.logger.info("--------------------")
         self.path_to_qsc_graph = None
 
-    def refine_and_create_feature_vector_matrices(self, max_step=np.inf, q: int = 1, max_color_count: int =4096):
+    def run(self, max_step=np.inf, q: int = 1, max_color_count: int =4096):
         fvm_dir_exists = os.path.exists(self.fvm_dir_path)
         qsc_file_exists = os.path.isfile(self.qsc_file_path)
         refinement_results_exists = os.path.exists(self.refinement_results_file_path)
@@ -149,7 +149,7 @@ class QscRefinement:
         cg = ColoredGraph(self.disjoint_graph.copy())
         qsc = QuasiStableColoringGraph(
             cg,
-            q=0.0,
+            q=q,
             n_colors=np.inf,
             q_tolerance=0.0,
             max_steps=np.inf,

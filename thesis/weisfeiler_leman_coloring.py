@@ -5,7 +5,7 @@ from thesis.utils.other_utils import has_distinct_edge_labels
 
 
 class WeisfeilerLemanColoringGraph:
-    def __init__(self, colored_graph: ColoredGraph, refinement_steps: int = 1):
+    def __init__(self, colored_graph: ColoredGraph, refinement_steps = 1):
         self.colored_graph = colored_graph
         self.graph = colored_graph.graph
         self.refinement_steps = refinement_steps

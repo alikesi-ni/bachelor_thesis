@@ -2,22 +2,23 @@ import networkx as nx
 import numpy as np
 
 from thesis.evaluation.qsc_refinement import QscRefinement
+from thesis.evaluation.wl_refinement import WlRefinement
 from thesis.utils.read_data_utils import dataset_to_graphs
 
 dataset_names = [
     # # small datasets
-    # "KKI",
-    # "PTC_FM",
+    "KKI",
+    "PTC_FM",
     # "MSRC_9",
 
     # # large datasets
-    "COLLAB",
+    # "COLLAB",
     # "DD",
     # "REDDIT-BINARY",
 
     # # medium datsets
     # "IMDB-BINARY",
-    # "NCI1",
+    "NCI1",
 
     # # social network datasets
     # "EGO-1",
@@ -26,7 +27,7 @@ dataset_names = [
     # "EGO-4",
 
     # # new datasets
-    # "ENZYMES",
+    "ENZYMES",
     # "PROTEINS"
 ]
 
@@ -38,5 +39,5 @@ for dataset_name in dataset_names:
 
     max_step = np.inf
 
-    qsc_refinement = QscRefinement(dataset_name, disjoint_graph, graph_id_label_map, base_dir="../../evaluation-results")
-    qsc_refinement.run(q=0)
+    wl_refinement = WlRefinement(dataset_name, disjoint_graph, graph_id_label_map, refinement_steps=39, base_dir="../../evaluation-results")
+    wl_refinement.run()

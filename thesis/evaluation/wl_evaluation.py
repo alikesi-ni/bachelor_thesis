@@ -1,66 +1,55 @@
 import os
 import csv
-from typing import Optional
-
+import pickle
+import pandas as pd
 import numpy as np
 import networkx as nx
-import pandas as pd
+
+from typing import Optional, List
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.pairwise import cosine_similarity
 
-from thesis.evaluation.step_settings import StepSettings
-from thesis.evaluation.utils import stitch_feature_vectors, generate_report
+from thesis.evaluation.utils import generate_report
 from thesis.utils.logger_config import LoggerFactory
 from tests.test_print_system_info import log_machine_spec
 
 
-class QscEvaluation:
+class WlEvaluation:
     def __init__(
         self,
         dataset_name: str,
         graph_id_label_map: dict[int, int],
-        step_settings: StepSettings,
-        c_grid: Optional[list[float]] = None,
+        h_grid: Optional[List[int]] = None,
+        c_grid: Optional[List[float]] = None,
         folds: int = 10,
-        repeats: int = 10,
-        start_repeat: int = 1,
+        trials: int = 10,
+        start_trial: int = 0,
         base_dir: str = "../evaluation-results",
         logging: bool = True
     ):
         if c_grid is None:
-            c_grid = [10 ** i for i in range(-3, 4)]  # C ∈ {1e-3 to 1e3}
-
-        self.c_grid = c_grid
+            c_grid = [10 ** i for i in range(-3, 4)]
+        if h_grid is None:
+            h_grid = list(range(0, 11))
 
         self.dataset_name = dataset_name
-        self.step_settings = step_settings
+        self.graph_ids = np.array(sorted(graph_id_label_map.keys()))
+        self.graph_labels = np.array([graph_id_label_map[i] for i in self.graph_ids])
+
         self.c_grid = c_grid
+        self.h_grid = sorted(h_grid)
         self.folds = folds
-        self.repeats = repeats
-        self.start_repeat = start_repeat
+        self.repeats = trials
+        self.start_repeat = start_trial
 
-        sorted_map = dict(sorted(graph_id_label_map.items()))
-        self.graph_ids = np.array(list(sorted_map.keys()))
-        self.graph_labels = np.array(list(sorted_map.values()))
-
-        self.base_dir = base_dir
-        self.data_dir_path = os.path.join(self.base_dir, f"QSC-{self.dataset_name}")
-        if not os.path.exists(self.data_dir_path):
-            raise FileNotFoundError(f"Expected data directory does not exist: {self.data_dir_path}")
-
-        self.fvm_dir_path = os.path.join(self.data_dir_path, "feature_vector_matrices")
-        if not os.path.isdir(self.fvm_dir_path):
-            raise FileNotFoundError("Missing feature_vector_matrices directory.")
-
-        self.refinement_results_file_path = os.path.join(self.data_dir_path, "refinement_results.csv")
-        if not os.path.isfile(self.refinement_results_file_path):
-            raise FileNotFoundError("Missing refinement_results.csv.")
-
-        self.eval_output_dir = os.path.join(self.data_dir_path, step_settings.to_dirname())
+        self.data_dir_path = os.path.join(base_dir, f"WL-{dataset_name}")
+        h_grid_str = "-".join(str(h) for h in self.h_grid)
+        self.eval_output_dir = os.path.join(self.data_dir_path, f"h_grid__{h_grid_str}")
         os.makedirs(self.eval_output_dir, exist_ok=True)
 
+        self.fvm_dir_path = os.path.join(self.data_dir_path, "feature_vector_matrices")
         self.train_path = os.path.join(self.eval_output_dir, "train_results.csv")
         self.test_path = os.path.join(self.eval_output_dir, "test_results.csv")
         self.log_path = os.path.join(self.eval_output_dir, "evaluation_log.txt")
@@ -77,22 +66,16 @@ class QscEvaluation:
         log_machine_spec(self.logger)
         self.logger.info("--------------------")
         self.logger.info(f"Dataset: {dataset_name}")
-        self.logger.info("Algorithm: QSC (Quasi-Stable Coloring")
-        self.logger.info(f"Evaluation: {step_settings.to_dirname()}")
-        self.logger.info("--------------------")
-        self.logger.info("Parameter and associated steps:")
-        for param, steps in self.step_settings.get_list_param_steps(self.data_dir_path):
-            self.logger.info(f"  param={param} -> steps={steps}")
+        self.logger.info("Algorithm: WL (Weisfeiler–Leman)")
+        self.logger.info(f"h_grid: {self.h_grid}")
         self.logger.info("--------------------")
 
-    def evaluate(self):
+    def run(self):
         self.logger.info(
             f"Evaluation Parameters: C={self.c_grid}, folds={self.folds}, repeats={self.repeats}, start_repeat={self.start_repeat}"
         )
 
         existing_results = set()
-
-        # load existing test results if available
         if os.path.exists(self.test_path):
             try:
                 df_existing = pd.read_csv(self.test_path)
@@ -106,27 +89,24 @@ class QscEvaluation:
             writer_train = csv.writer(f_train)
             writer_test = csv.writer(f_test)
 
-            # write headers if empty
             if os.path.getsize(self.train_path) == 0:
                 writer_train.writerow(["trial", "fold", "C", "param", "accuracy"])
             if os.path.getsize(self.test_path) == 0:
                 writer_test.writerow(["trial", "fold", "C", "param", "accuracy"])
 
-            for trial in range(self.start_repeat, self.repeats + 1):
+            for trial in range(self.start_repeat, self.repeats):
                 outer_cv = StratifiedKFold(n_splits=self.folds, shuffle=True, random_state=trial)
                 self.logger.info(f"[trial {trial}] Starting outer cross-validation")
 
-                for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(self.graph_ids, self.graph_labels),
-                                                                   1):
+                for outer_fold, (train_idx, test_idx) in enumerate(outer_cv.split(self.graph_ids, self.graph_labels)):
                     if (trial, outer_fold) in existing_results:
                         self.logger.info(f"[trial {trial} fold {outer_fold}] Already completed. Skipping.")
                         continue
 
-                    # Remove outdated training rows for this trial/fold and beyond
+                    # Remove outdated training rows for this trial/fold
                     if os.path.exists(self.train_path):
                         with open(self.train_path, "r", newline="") as f:
                             lines = f.readlines()
-
                         if len(lines) > 1:
                             df_train = pd.read_csv(self.train_path)
                             df_train_filtered = df_train[
@@ -144,8 +124,7 @@ class QscEvaluation:
                                         float(row["accuracy"])
                                     ])
                         else:
-                            self.logger.info(
-                                f"Skipping train cleanup — {self.train_path} contains only headers or is empty.")
+                            self.logger.info(f"Skipping train cleanup — only header present.")
 
                     x_train, y_train = self.graph_ids[train_idx], self.graph_labels[train_idx]
                     x_test, y_test = self.graph_ids[test_idx], self.graph_labels[test_idx]
@@ -153,13 +132,13 @@ class QscEvaluation:
                     best_score = -1
                     best_params = None
 
-                    for param, steps in self.step_settings.get_list_param_steps(self.data_dir_path):
-                        try:
-                            fv_matrix = stitch_feature_vectors(self.data_dir_path, steps)
-                        except FileNotFoundError:
-                            self.logger.warning(
-                                f"Feature vectors for steps={steps} (param={param}) not found. Skipping.")
+                    for step in self.h_grid:
+                        fv_path = os.path.join(self.fvm_dir_path, f"step_{step}.pkl")
+                        if not os.path.exists(fv_path):
+                            self.logger.warning(f"Missing FV file for step {step}, skipping.")
                             continue
+                        with open(fv_path, "rb") as f:
+                            fv_matrix, _ = pickle.load(f)
 
                         for C in self.c_grid:
                             inner_cv = StratifiedKFold(n_splits=self.folds, shuffle=True, random_state=0)
@@ -181,24 +160,24 @@ class QscEvaluation:
                                 inner_accuracies.append(acc)
 
                             avg_inner_acc = np.mean(inner_accuracies)
-                            writer_train.writerow([trial, outer_fold, C, param, avg_inner_acc])
+                            writer_train.writerow([trial, outer_fold, C, step, avg_inner_acc])
                             f_train.flush()
 
-                            self.logger.info(f"[trial {trial} fold {outer_fold}] param={param} C={C} "
+                            self.logger.info(f"[trial {trial} fold {outer_fold}] step={step} C={C} "
                                              f"Avg Inner Acc={avg_inner_acc:.4f}")
 
                             if avg_inner_acc > best_score:
                                 best_score = avg_inner_acc
-                                best_params = (param, C)
+                                best_params = (step, C)
 
                     if best_params is None:
-                        self.logger.warning(
-                            f"No valid parameter combination found for trial {trial} fold {outer_fold}. Skipping.")
+                        self.logger.warning(f"No valid parameter combination for trial {trial} fold {outer_fold}. Skipping.")
                         continue
 
-                    param_best, C_best = best_params
-                    steps_best = dict(self.step_settings.get_list_param_steps(self.data_dir_path))[param_best]
-                    fv_matrix = stitch_feature_vectors(self.data_dir_path, steps_best)
+                    step_best, C_best = best_params
+                    fv_path = os.path.join(self.fvm_dir_path, f"step_{step_best}.pkl")
+                    with open(fv_path, "rb") as f:
+                        fv_matrix, _ = pickle.load(f)
 
                     K_train = cosine_similarity(fv_matrix[x_train], fv_matrix[x_train])
                     K_test = cosine_similarity(fv_matrix[x_test], fv_matrix[x_train])
@@ -208,13 +187,13 @@ class QscEvaluation:
                     y_pred = model.predict(K_test)
                     test_acc = accuracy_score(y_test, y_pred) * 100
 
-                    writer_test.writerow([trial, outer_fold, C_best, param_best, test_acc])
+                    writer_test.writerow([trial, outer_fold, C_best, step_best, test_acc])
                     f_test.flush()
 
-                    self.logger.info(f"[trial {trial} fold {outer_fold}] BEST param={param_best} C={C_best} "
+                    self.logger.info(f"[trial {trial} fold {outer_fold}] BEST step={step_best} C={C_best} "
                                      f"Outer Test Acc={test_acc:.4f}")
 
-        # Only generate report if it doesn't already exist
+        # Generate report if not already there
         report_path = os.path.join(self.eval_output_dir, "report.txt")
         if not os.path.exists(report_path):
             accuracy, std = generate_report(self.eval_output_dir, self.eval_output_dir)
@@ -225,5 +204,3 @@ class QscEvaluation:
         else:
             self.logger.info("Evaluation already complete — report exists.")
             return None, None
-
-

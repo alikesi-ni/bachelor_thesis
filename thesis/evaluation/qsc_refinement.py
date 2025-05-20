@@ -6,7 +6,7 @@ import time
 import networkx as nx
 import numpy as np
 
-from tests.test_print_system_info import log_machine_spec
+from thesis.test.test_print_system_info import log_machine_spec
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.quasi_stable_coloring import QuasiStableColoringGraph
 from thesis.utils.logger_config import LoggerFactory

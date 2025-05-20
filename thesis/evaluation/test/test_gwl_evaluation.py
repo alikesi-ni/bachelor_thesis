@@ -6,6 +6,7 @@ dataset_names = [
     # "KKI",
     # "PTC_FM",
     # "MSRC_9",
+    "MUTAG",
 
     # # large datasets
     # "COLLAB",
@@ -16,7 +17,7 @@ dataset_names = [
     # "IMDB-BINARY",
     # "NCI1",
 
-    # social network datasets
+    # # social network datasets
     # "EGO-1",
     # "EGO-2",
     # "EGO-3",

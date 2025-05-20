@@ -6,6 +6,7 @@ dataset_names = [
     # "KKI",
     # "PTC_FM",
     # "MSRC_9",
+    "MUTAG",
 
     # # large datasets
     # "COLLAB",
@@ -25,9 +26,6 @@ dataset_names = [
     # # new datasets
     # "ENZYMES",
     # "PROTEINS",
-
-    # "IMDB-BINARY",
-    # "DD",
 ]
 
 for dataset_name in dataset_names:

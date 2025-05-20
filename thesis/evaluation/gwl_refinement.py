@@ -9,7 +9,7 @@ import pandas as pd
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.gwl_coloring import GWLColoringGraph
 from thesis.utils.logger_config import LoggerFactory
-from tests.test_print_system_info import log_machine_spec
+from thesis.test.test_print_system_info import log_machine_spec
 
 
 class GwlRefinement:

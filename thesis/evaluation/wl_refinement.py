@@ -5,9 +5,8 @@ import time
 
 import networkx as nx
 import numpy as np
-import pandas as pd
 
-from tests.test_print_system_info import log_machine_spec
+from thesis.test.test_print_system_info import log_machine_spec
 from thesis.colored_graph.colored_graph import ColoredGraph
 from thesis.weisfeiler_leman_coloring import WeisfeilerLemanColoringGraph
 from thesis.utils.logger_config import LoggerFactory

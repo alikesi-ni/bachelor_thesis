@@ -3,7 +3,6 @@ import csv
 from typing import Optional
 
 import numpy as np
-import networkx as nx
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
@@ -13,7 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from thesis.evaluation.step_settings import StepSettings
 from thesis.evaluation.utils import stitch_feature_vectors, generate_report
 from thesis.utils.logger_config import LoggerFactory
-from tests.test_print_system_info import log_machine_spec
+from thesis.test.test_print_system_info import log_machine_spec
 
 
 class QscEvaluation:

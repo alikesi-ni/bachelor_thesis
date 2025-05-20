@@ -12,7 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from thesis.evaluation.utils import generate_report
 from thesis.utils.logger_config import LoggerFactory
-from tests.test_print_system_info import log_machine_spec
+from thesis.test.test_print_system_info import log_machine_spec
 
 
 class GwlEvaluation:

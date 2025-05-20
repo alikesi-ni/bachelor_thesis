@@ -9,6 +9,7 @@ dataset_names = [
     # "KKI",
     # "PTC_FM",
     # "MSRC_9",
+    "MUTAG",
 
     # # large datasets
     # "COLLAB",

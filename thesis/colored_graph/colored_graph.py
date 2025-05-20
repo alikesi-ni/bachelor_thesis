@@ -18,9 +18,9 @@ class ColoredGraph:
         self.next_color_id = 0
         self.color_stack_height = 0
         self.color_hierarchy_tree = None
-        self.__color()
+        self._color()
 
-    def __color(self):
+    def _color(self):
         node_labels = nx.get_node_attributes(self.graph, "label")
         are_nodes_labeled = has_distinct_node_labels(self.graph)
 

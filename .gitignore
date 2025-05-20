@@ -1,8 +1,9 @@
 .idea
 data
 plots
-tests/results/*.csv
-tests/results/*.txt
+old_tests
+
+thesis/evaluation-results
 
 # Ignore Python bytecode and cache files
 __pycache__/

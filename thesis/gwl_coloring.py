@@ -1,7 +1,6 @@
 import networkx as nx
 
 from thesis.clustering.kmeans import KMeans
-from thesis.color_hierarchy.color_hierarchy_tree import ColorHierarchyTree
 from thesis.color_hierarchy.color_node import ColorNode
 from thesis.colored_graph.colored_graph import ColoredGraph
 
@@ -20,7 +19,7 @@ class GWLColoringGraph:
         self.num_forgy_iterations = num_forgy_iterations
         self.seed = seed
 
-        self.__is_refined = None
+        self._is_refined = None
         self.color_hierarchy_tree = None
 
     def refine(self, verbose: bool = False):
@@ -31,25 +30,23 @@ class GWLColoringGraph:
 
         self.color_hierarchy_tree = self.colored_graph.color_hierarchy_tree
 
-        # --- iterative refinement ---
         for _ in range(self.refinement_steps):
-            self.__renep()
-            self.update_colors()
+            self._renep()
+            self._update_colors()
 
-        # Finalize
-        self.__is_refined = True
+        self._is_refined = True
 
         if verbose:
             self.color_hierarchy_tree.print_tree()
 
-    def __renep(self) -> None:
+    def _renep(self) -> None:
         leaves = self.color_hierarchy_tree.get_leaves()
         edge_labels = nx.get_edge_attributes(self.graph, "label")
 
         for leaf in leaves:
             if len(leaf.associated_vertices) > 1:
                 neighbor_color_count = {
-                    vertex: self.generate_neighbor_color_count(vertex, edge_labels)
+                    vertex: self._generate_neighbor_color_count(vertex, edge_labels)
                     for vertex in leaf.associated_vertices
                 }
 
@@ -78,34 +75,18 @@ class GWLColoringGraph:
                 leaf.add_child(node)
                 self.colored_graph.next_color_id += 1
 
-    def update_colors(self) -> None:
-        """
-        Updates the color of the associated nodes for all leaves of the ColorHierarchyTree.
-
-        Parameters
-        ----------
-        graph : nx.Graph
-            A nx.Graph instance that is being refined
-
-        color_hierarchy_tree : ColorHierarchyTree
-            Corresponding instance of ColorHierarchyTree
-
-        """
-
+    def _update_colors(self) -> None:
         for leaf in self.color_hierarchy_tree.get_leaves():
             for node in leaf.associated_vertices:
                 self.graph.nodes[node]["color-stack"].extend([leaf.color])
         self.colored_graph.color_stack_height += 1
 
-    def generate_neighbor_color_count(self, vertex: int, edge_labels: dict) -> dict:
+    def _generate_neighbor_color_count(self, vertex: int, edge_labels: dict) -> dict:
         """
         Generates the neighbor color count for a given vertex.
 
         Parameters
         ----------
-        graph : nx.Graph
-            A nx.Graph instance that is being refined
-
         vertex : int
             ID of the node/ vertex for which the neighbor color count need to be generated
 
@@ -136,3 +117,22 @@ class GWLColoringGraph:
                 color_neighbor_count[neighbor_color] = 1
 
         return color_neighbor_count
+
+
+    def refine_one_step(self, verbose: bool = False):
+        """
+        Applies a single refinement step of the GWL algorithm.
+        Builds the color hierarchy tree on the first call, then refines and updates colors.
+        """
+        if self.color_hierarchy_tree is None:
+            self.colored_graph.build_color_hierarchy_tree()
+            self.color_hierarchy_tree = self.colored_graph.color_hierarchy_tree
+
+        self._renep()
+        self._update_colors()
+
+        if verbose:
+            self.color_hierarchy_tree.print_tree()
+
+        return self.colored_graph.get_num_colors()
+

@@ -1,12 +1,10 @@
-import networkx as nx
-
 from thesis.evaluation.wl_evaluation import WlEvaluation
 from thesis.utils.read_data_utils import dataset_to_graphs
 
 dataset_names = [
     # # small datasets
     # "KKI",
-    "PTC_FM",
+    # "PTC_FM",
     # "MSRC_9",
 
     # # large datasets
@@ -18,18 +16,18 @@ dataset_names = [
     # "IMDB-BINARY",
     # "NCI1",
 
-    # social network datasets
-    "EGO-1",
-    "EGO-2",
-    "EGO-3",
-    "EGO-4",
+    # # social network datasets
+    # "EGO-1",
+    # "EGO-2",
+    # "EGO-3",
+    # "EGO-4",
 
-    # new datasets
-    "ENZYMES",
-    "PROTEINS",
+    # # new datasets
+    # "ENZYMES",
+    # "PROTEINS",
 
-    "IMDB-BINARY",
-    "DD",
+    # "IMDB-BINARY",
+    # "DD",
 ]
 
 for dataset_name in dataset_names:

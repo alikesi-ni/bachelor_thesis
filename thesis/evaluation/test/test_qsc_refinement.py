@@ -11,7 +11,7 @@ dataset_names = [
     # "MSRC_9",
 
     # # large datasets
-    "COLLAB",
+    # "COLLAB",
     # "DD",
     # "REDDIT-BINARY",
 

@@ -7,8 +7,8 @@ from thesis.utils.read_data_utils import dataset_to_graphs
 
 dataset_names = [
     # # small datasets
-    "KKI",
-    "PTC_FM",
+    # "KKI",
+    # "PTC_FM",
     # "MSRC_9",
 
     # # large datasets
@@ -18,7 +18,7 @@ dataset_names = [
 
     # # medium datsets
     # "IMDB-BINARY",
-    "NCI1",
+    # "NCI1",
 
     # # social network datasets
     # "EGO-1",
@@ -27,7 +27,7 @@ dataset_names = [
     # "EGO-4",
 
     # # new datasets
-    "ENZYMES",
+    # "ENZYMES",
     # "PROTEINS"
 ]
 

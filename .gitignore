@@ -1,6 +1,7 @@
 .idea
 data
 plots
+old_tests
 tests/results/*.csv
 tests/results/*.txt
 tests/*.csv

@@ -1,4 +1,0 @@
-2025-05-02 14:09:11 INFO  - Dataset: PTC_FM
-2025-05-02 14:09:11 INFO  - Algorithm: QSC
-2025-05-02 14:09:11 INFO  - Parameters: q_grid=[8, 4, 2, 1, 0], n_max=512, c_grid=[0.001, 0.01, 0.1, 1, 10, 100, 1000], folds=10, repeats=1, start_repeat=1
-2025-05-02 14:09:11 INFO  - [i=1] Dataset: PTC_FM

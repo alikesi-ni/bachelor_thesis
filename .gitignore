@@ -1,14 +1,8 @@
 .idea
 data
 plots
-tests/results/*.csv
-tests/results/*.txt
-tests/*.csv
-tests/*.txt
-/tests/**/*.txt
-/tests/**/*.csv
-*.npz
-*-Evaluation-*[0-9]*/
+old_tests
+
 thesis/evaluation-results
 
 # Ignore Python bytecode and cache files

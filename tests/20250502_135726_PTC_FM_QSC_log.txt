@@ -1,8 +1,0 @@
-2025-05-02 13:57:26 INFO  - Dataset: PTC_FM
-2025-05-02 13:57:26 INFO  - Algorithm: QSC
-2025-05-02 13:57:26 INFO  - Parameters: q_grid=[8, 4, 2, 1, 0], n_max=512, c_grid=[0.001, 0.01, 0.1, 1, 10, 100, 1000], folds=10, repeats=1, start_repeat=1
-2025-05-02 13:57:26 INFO  - [i=1] Dataset: PTC_FM
-2025-05-02 13:57:31 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
-2025-05-02 13:57:31 INFO  - [i=1 fold=1] Refined with q=8, n=18
-2025-05-02 13:57:31 INFO  - QSC DONE: color count: 18, max q-error=4.0, iterations=1
-2025-05-02 13:57:31 INFO  - [i=1 fold=1] Refined with q=4, n=18

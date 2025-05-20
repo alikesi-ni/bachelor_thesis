@@ -18,7 +18,7 @@ dataset_names = [
 
     # social network datasets
     # "EGO-1",
-    "EGO-2",
+    # "EGO-2",
     # "EGO-3",
     # "EGO-4",
 

@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity, linear_kernel
 
 from thesis.evaluation.step_settings import StepSettings
 from thesis.evaluation.utils import stitch_feature_vectors, generate_report
@@ -26,16 +26,24 @@ class QscEvaluation:
         repeats: int = 10,
         start_repeat: int = 1,
         base_dir: str = "../evaluation-results",
-        logging: bool = True
+        logging: bool = True,
+        kernel_fn = linear_kernel
     ):
         if c_grid is None:
             c_grid = [10 ** i for i in range(-3, 4)]  # C ∈ {1e-3 to 1e3}
 
-        self.c_grid = c_grid
+        self.kernel_fn = kernel_fn
+        full_kernel_name = kernel_fn.__name__
+        if full_kernel_name == "linear_kernel":
+            self.kernel_name = "dot"
+        elif full_kernel_name == "cosine_similarity":
+            self.kernel_name = "cosine"
+        else:
+            self.kernel_name = full_kernel_name
 
+        self.c_grid = c_grid
         self.dataset_name = dataset_name
         self.step_settings = step_settings
-        self.c_grid = c_grid
         self.folds = folds
         self.repeats = repeats
         self.start_repeat = start_repeat
@@ -57,7 +65,11 @@ class QscEvaluation:
         if not os.path.isfile(self.refinement_results_file_path):
             raise FileNotFoundError("Missing refinement_results.csv.")
 
-        self.eval_output_dir = os.path.join(self.data_dir_path, step_settings.to_dirname())
+        self.eval_output_dir = os.path.join(
+            self.data_dir_path,
+            self.kernel_name,
+            step_settings.to_dirname()
+        )
         os.makedirs(self.eval_output_dir, exist_ok=True)
 
         self.train_path = os.path.join(self.eval_output_dir, "train_results.csv")
@@ -76,8 +88,9 @@ class QscEvaluation:
         log_machine_spec(self.logger)
         self.logger.info("--------------------")
         self.logger.info(f"Dataset: {dataset_name}")
-        self.logger.info("Algorithm: QSC (Quasi-Stable Coloring")
+        self.logger.info("Algorithm: QSC (Quasi-Stable Coloring)")
         self.logger.info(f"Evaluation: {step_settings.to_dirname()}")
+        self.logger.info(f"Kernel: {self.kernel_name}")
         self.logger.info("--------------------")
         self.logger.info("Parameter and associated steps:")
         for param, steps in self.step_settings.get_list_param_steps(self.data_dir_path):

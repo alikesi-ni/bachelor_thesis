@@ -8,7 +8,7 @@ from typing import Optional, List
 from sklearn.model_selection import StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity, linear_kernel
 
 from thesis.evaluation.utils import generate_report
 from thesis.utils.logger_config import LoggerFactory
@@ -28,7 +28,8 @@ class GwlEvaluation:
         repeats: int = 10,
         start_repeat: int = 0,
         base_dir: str = "../evaluation-results",
-        logging: bool = True
+        logging: bool = True,
+        kernel_fn = linear_kernel
     ):
         if c_grid is None:
             c_grid = [10 ** i for i in range(-3, 4)]
@@ -44,13 +45,28 @@ class GwlEvaluation:
         self.repeats = repeats
         self.start_repeat = start_repeat
 
+        self.kernel_fn = kernel_fn
+        full_kernel_name = kernel_fn.__name__
+        if full_kernel_name == "linear_kernel":
+            self.kernel_name = "dot"
+        elif full_kernel_name == "cosine_similarity":
+            self.kernel_name = "cosine"
+        else:
+            self.kernel_name = full_kernel_name
+
         sorted_map = dict(sorted(graph_id_label_map.items()))
         self.graph_ids = np.array(list(sorted_map.keys()))
         self.graph_labels = np.array(list(sorted_map.values()))
 
         self.refine_dir = os.path.join(base_dir, f"GWL-{dataset_name}", cluster_init, f"k__{n_clusters}")
         h_grid_str = "-".join(str(h) for h in self.h_grid)
-        self.eval_output_dir = os.path.join(self.refine_dir, f"h_grid__{h_grid_str}")
+
+        # Add kernel-specific subdirectory to eval output path
+        self.eval_output_dir = os.path.join(
+            self.refine_dir,
+            self.kernel_name,
+            f"h_grid__{h_grid_str}"
+        )
         os.makedirs(self.eval_output_dir, exist_ok=True)
 
         self.fvm_dir_path = os.path.join(self.refine_dir, "feature_vector_matrices")
@@ -74,6 +90,7 @@ class GwlEvaluation:
         self.logger.info(f"Cluster init: {cluster_init}")
         self.logger.info(f"n_clusters: {n_clusters}")
         self.logger.info(f"h_grid: {self.h_grid}")
+        self.logger.info(f"Kernel: {self.kernel_name}")
         self.logger.info("--------------------")
 
     def evaluate(self):
@@ -159,8 +176,8 @@ class GwlEvaluation:
                                 x_val = x_train[inner_val_idx]
                                 y_val = y_train[inner_val_idx]
 
-                                K_train = cosine_similarity(fv_matrix[x_inner_train], fv_matrix[x_inner_train])
-                                K_val = cosine_similarity(fv_matrix[x_val], fv_matrix[x_inner_train])
+                                K_train = self.kernel_fn(fv_matrix[x_inner_train], fv_matrix[x_inner_train])
+                                K_val = self.kernel_fn(fv_matrix[x_val], fv_matrix[x_inner_train])
 
                                 model = SVC(kernel="precomputed", C=C)
                                 model.fit(K_train, y_inner_train)
@@ -187,8 +204,8 @@ class GwlEvaluation:
                     with open(fv_path, "rb") as f:
                         fv_matrix, _ = pickle.load(f)
 
-                    K_train = cosine_similarity(fv_matrix[x_train], fv_matrix[x_train])
-                    K_test = cosine_similarity(fv_matrix[x_test], fv_matrix[x_train])
+                    K_train = self.kernel_fn(fv_matrix[x_train], fv_matrix[x_train])
+                    K_test = self.kernel_fn(fv_matrix[x_test], fv_matrix[x_train])
 
                     model = SVC(kernel="precomputed", C=C_best)
                     model.fit(K_train, y_train)

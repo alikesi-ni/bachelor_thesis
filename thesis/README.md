@@ -13,7 +13,7 @@
 
 ### Prerequisites
 
-- Python version: 3.12.7
+- Python version: 3.12.9
 
 ### Install Dependencies
 

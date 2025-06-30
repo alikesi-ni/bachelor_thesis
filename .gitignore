@@ -1,5 +1,6 @@
 .idea
-data
+data/*
+!data/PTC_FM/
 plots
 old_tests
 

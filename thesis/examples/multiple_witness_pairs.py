@@ -19,10 +19,10 @@ G.add_edges_from([
 logger = LoggerFactory.get_console_logger(__name__);
 
 cg = ColoredGraph(G)
-# qsc = QuasiStableColoringGraph(cg, q=0.0, n_colors=30, logger=logger)
-# qsc.refine()
-wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=np.inf)
-wl.refine()
+qsc = QuasiStableColoringGraph(cg, q=0.0, n_colors=30, logger=logger)
+qsc.refine()
+# wl = WeisfeilerLemanColoringGraph(cg, refinement_steps=np.inf)
+# wl.refine()
 
 color_stack_height = cg.color_stack_height
 for i in range (color_stack_height):

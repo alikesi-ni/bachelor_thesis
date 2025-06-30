@@ -4,9 +4,9 @@ from thesis.utils.read_data_utils import dataset_to_graphs
 dataset_names = [
     # # small datasets
     # "KKI",
-    # "PTC_FM",
+    "PTC_FM",
     # "MSRC_9",
-    "MUTAG",
+    # "MUTAG",
 
     # # large datasets
     # "COLLAB",
@@ -28,7 +28,7 @@ dataset_names = [
     # "PROTEINS",
 ]
 
-init_methods = ["forgy", "kmeans++"]
+init_methods = ["kmeans++"]
 k_grid = [2**i for i in range(1, 5)]  # 2, 4, 8, 16
 h_grid = list(range(11))  # steps 0 to 10
 

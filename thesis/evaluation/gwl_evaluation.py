@@ -29,7 +29,7 @@ class GwlEvaluation:
         start_repeat: int = 0,
         base_dir: str = "../evaluation-results",
         logging: bool = True,
-        kernel_fn = linear_kernel
+        kernel_fn = cosine_similarity
     ):
         if c_grid is None:
             c_grid = [10 ** i for i in range(-3, 4)]

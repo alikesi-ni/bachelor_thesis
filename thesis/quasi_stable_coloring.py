@@ -31,17 +31,16 @@ class ColorStats:
 
 
 class QuasiStableColoringGraph:
-    def __init__(self, colored_graph: ColoredGraph, q=0.0, n_colors=np.inf, max_steps=np.inf, weighting=False,
+    def __init__(self, colored_graph: ColoredGraph, q=0.0, n_colors=np.inf, max_steps=np.inf,
                  q_tolerance=0.0, logger=None, logging_level="error"):
         self.colored_graph = colored_graph
         self.graph = colored_graph.graph
         self.q = q
         self.n_colors = n_colors
         self.max_steps = max_steps
-        self.weighting = weighting
         self.q_tolerance = q_tolerance
 
-        self.partition = []
+        self.blocks = []
         self.current_max_q_error = np.inf
         self.previous_max_q_error = np.inf
         self.current_step = 0
@@ -62,67 +61,52 @@ class QuasiStableColoringGraph:
         assert sorted_nodes == list(range(len(nodes))), "Node indices must be consecutive integers starting from 0"
 
     def _get_partition_matrix(self) -> csr_array:
-        num_nodes = sum(len(block) for block in self.partition)
-        num_partitions = len(self.partition)
+        num_nodes = sum(len(block) for block in self.blocks)
+        num_blocks = len(self.blocks)
         I = np.zeros(num_nodes, dtype=int)
         J = np.zeros(num_nodes, dtype=int)
         V = np.ones(num_nodes, dtype=np.float64)
         i = 0
-        for block_idx, block in enumerate(self.partition):
+        for block_idx, block in enumerate(self.blocks):
             for node_id in block:
                 I[i] = node_id
                 J[i] = block_idx
                 i += 1
-        return csr_array((V, (I, J)), shape=(self.graph.number_of_nodes(), num_partitions))
+        return csr_array((V, (I, J)), shape=(self.graph.number_of_nodes(), num_blocks))
 
-    def _update_stats(self):
+    def _initialize_partition_stats(self):
         P_sparse = self._get_partition_matrix()
         self.color_stats.neighbor = self.weights.dot(P_sparse)
 
-        m = len(self.partition)
-        for i, block in enumerate(self.partition):
+        m = len(self.blocks)
+        for i, block in enumerate(self.blocks):
             neighbor_matrix = self.color_stats.neighbor[block, :].toarray()
             upper_deg = np.max(neighbor_matrix, axis=0).reshape(1, -1)
             lower_deg = np.min(neighbor_matrix, axis=0).reshape(1, -1)
             self.color_stats.upper_base[i, :m] = upper_deg.flatten()
             self.color_stats.lower_base[i, :m] = lower_deg.flatten()
 
-        if self.weighting:
-            self.color_stats.errors_base[:m, :m] = (
-                self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m]
-            ) * np.array([len(P_i) for P_i in self.partition]).reshape(-1, 1)
-        else:
-            self.color_stats.errors_base[:m, :m] = (
-                self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m]
-            )
+        self.color_stats.errors_base[:m, :m] = (self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m])
 
-    def _update_stats_partitions(self, indices_to_be_updated):
+    def _update_partition_stats(self, indices_to_be_updated):
         start_time = time.time()
-        m = len(self.partition)
+        m = len(self.blocks)
 
         for i in indices_to_be_updated:
-            nodes = self.partition[i]
+            nodes = self.blocks[i]
             degs = np.array(self.weights[:, nodes].sum(axis=1)).flatten()
             self.color_stats.neighbor[:, i] = degs
             self.color_stats.upper_base[i, :m] = np.max(self.color_stats.neighbor[nodes, :], axis=0).toarray()
             self.color_stats.lower_base[i, :m] = np.min(self.color_stats.neighbor[nodes, :], axis=0).toarray()
 
-        for i, block in enumerate(self.partition):
+        for i, block in enumerate(self.blocks):
             for j in indices_to_be_updated:
-                self.color_stats.upper_base[i, j] = np.max(
-                    self.color_stats.neighbor[block, j])
-                self.color_stats.lower_base[i, j] = np.min(
-                    self.color_stats.neighbor[block, j])
+                self.color_stats.upper_base[i, j] = np.max(self.color_stats.neighbor[block, j])
+                self.color_stats.lower_base[i, j] = np.min(self.color_stats.neighbor[block, j])
 
-        if self.weighting:
-            sizes = np.array([len(block) for block in self.partition]).reshape(-1, 1)
-            self.color_stats.errors_base[:m, :m] = (self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[
-                                                                                          :m, :m]) * sizes
-        else:
-            self.color_stats.errors_base[:m, :m] = (
-                        self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m])
+        self.color_stats.errors_base[:m, :m] = (self.color_stats.upper_base[:m, :m] - self.color_stats.lower_base[:m, :m])
 
-        for block in self.partition:
+        for block in self.blocks:
             color_id = self.colored_graph.next_color_id
             for node in block:
                 self.graph.nodes[node]["color-stack"].append(color_id)
@@ -138,7 +122,7 @@ class QuasiStableColoringGraph:
         self._set_up()
 
         while (
-                len(self.partition) < self.n_colors and
+                len(self.blocks) < self.n_colors and
                 self.current_step < self.max_steps and
                 self.current_max_q_error > 0.0
         ):
@@ -151,11 +135,11 @@ class QuasiStableColoringGraph:
             self.refine_one_step()
 
         self.logger.info(
-            f"QSC REFINEMENT DONE: steps: {self.current_step}, color_count: {len(self.partition)}, "
+            f"QSC REFINEMENT DONE: steps: {self.current_step}, color_count: {len(self.blocks)}, "
             f"max_q_error: {self.current_max_q_error}"
         )
 
-        return len(self.partition), self.current_step, self.current_max_q_error
+        return len(self.blocks), self.current_step, self.current_max_q_error
 
     def refine_one_step(self):
         if not self.is_set_up:
@@ -163,12 +147,12 @@ class QuasiStableColoringGraph:
 
         if self.current_max_q_error == 0.0:
             self.logger.warning(f"Q-error already 0.0 - no further refinement possible")
-            return len(self.partition), self.current_step, self.current_max_q_error
+            return len(self.blocks), self.current_step, self.current_max_q_error
 
         self.previous_max_q_error = self.current_max_q_error
         self.current_step += 1
 
-        m = len(self.partition)
+        m = len(self.blocks)
         errors = self.color_stats.errors_base[:m, :m]
         threshold = self.previous_max_q_error * (1 - self.q_tolerance)
         witness_pairs = np.argwhere(errors >= threshold)
@@ -184,9 +168,9 @@ class QuasiStableColoringGraph:
 
         self._resize_if_necessary()
 
-        self._update_stats_partitions(indices_with_node_changes)
+        self._update_partition_stats(indices_with_node_changes)
 
-        m = len(self.partition)
+        m = len(self.blocks)
         errors = self.color_stats.errors_base[:m, :m]
         self.current_max_q_error = np.max(errors)
 
@@ -194,13 +178,13 @@ class QuasiStableColoringGraph:
             self.logger.warning(
                 f"[step {self.current_step}] max q-error JUMPED from {self.previous_max_q_error:.1f} to {self.current_max_q_error:.1f}")
 
-        self.logger.info(f"[step {self.current_step}] DONE: color_count: {len(self.partition)}; max_q_error: {self.current_max_q_error}")
+        self.logger.info(f"[step {self.current_step}] DONE: color_count: {len(self.blocks)}; max_q_error: {self.current_max_q_error}")
         self.logger.info("--------------------")
 
-        return len(self.partition), self.current_step, self.current_max_q_error, len(witness_pairs)
+        return len(self.blocks), self.current_step, self.current_max_q_error, len(witness_pairs)
 
     def _resize_if_necessary(self):
-        m = len(self.partition)
+        m = len(self.blocks)
         rows, cols = self.color_stats.neighbor.shape
         if self.color_stats.n < m:
             self.logger.info(
@@ -215,25 +199,25 @@ class QuasiStableColoringGraph:
         changed_indices = set()
         for witness_i, split_groups in proposed_splits.items():
             first_group = split_groups.pop(0)
-            self.partition[witness_i] = first_group
+            self.blocks[witness_i] = first_group
             changed_indices.add(witness_i)
             for group in split_groups:
                 if group:
-                    self.partition.append(group)
-                    changed_indices.add(len(self.partition) - 1)
+                    self.blocks.append(group)
+                    changed_indices.add(len(self.blocks) - 1)
         return changed_indices
 
     def _propose_splits(self, witness_pairs):
         split_conditions = defaultdict(list)
         for witness_i, witness_j in witness_pairs:
-            degrees = self.color_stats.neighbor[self.partition[witness_i], witness_j].toarray().flatten()
+            degrees = self.color_stats.neighbor[self.blocks[witness_i], witness_j].toarray().flatten()
             split_deg = np.mean(degrees)
             split_conditions[witness_i].append((witness_j, split_deg))
 
         proposed_splits = {}
         for witness_i, conditions in split_conditions.items():
             node_buckets = defaultdict(list)
-            nodes = self.partition[witness_i]
+            nodes = self.blocks[witness_i]
             for node in nodes:
                 signature = []
                 for witness_j, split_deg in conditions:
@@ -251,12 +235,12 @@ class QuasiStableColoringGraph:
             color = color_stack[-1]
             color_groups[color].append(node)
 
-        self.partition = list(color_groups.values())
+        self.blocks = list(color_groups.values())
 
         self.weights = nx.adjacency_matrix(self.graph, nodelist=sorted(self.graph.nodes), dtype=np.float64)
-        self.color_stats = ColorStats(len(self.graph), max(len(self.partition), int(min(self.n_colors, 128))))
-        self._update_stats()
-        m = len(self.partition)
+        self.color_stats = ColorStats(len(self.graph), max(len(self.blocks), int(min(self.n_colors, 128))))
+        self._initialize_partition_stats()
+        m = len(self.blocks)
         errors = self.color_stats.errors_base[:m, :m]
         self.current_max_q_error = np.max(errors)
         self.is_set_up = True

@@ -7,9 +7,9 @@ from thesis.utils.read_data_utils import dataset_to_graphs
 dataset_names = [
     # # small datasets
     # "KKI",
-    # "PTC_FM",
+    "PTC_FM",
     # "MSRC_9",
-    "MUTAG",
+    # "MUTAG",
 
     # # large datasets
     # "COLLAB",
@@ -44,17 +44,7 @@ for dataset_name in dataset_names:
         StepSettings(method="h_grid", method_params={"h_grid": list(range(0, 17)) + [32, 64, 128, 256], "q_strictly_descending": False}),
     ]
 
-    # best_accuracy = 0
-    # best_std = np.inf
-    # best_parameters = ""
     for step_setting in step_settings:
         qsc_evaluation = QscEvaluation(dataset_name, graph_id_label_map, step_setting,
                                        base_dir="../../evaluation-results")
         accuracy, std = qsc_evaluation.evaluate()
-    #     if accuracy > best_accuracy:
-    #         best_accuracy = accuracy
-    #         best_std = std
-    #         best_parameters = step_setting.to_dirname()
-    #
-    # print(f"BEST PARAMETERS: {best_parameters}")
-    # print(f"BEST ACCURACY: {best_accuracy:.2f} +- {best_std:.2f}")

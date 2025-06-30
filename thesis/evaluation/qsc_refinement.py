@@ -99,7 +99,7 @@ class QscRefinement:
             self.logger.error("Aborting: max_q_error mismatch between qsc and saved params.")
             return
 
-        if len(qsc.partitions) != params.get("partition_count"):
+        if len(qsc.blocks) != params.get("partition_count"):
             self.logger.error("Aborting: partition count mismatch between qsc and saved params.")
             return
 
@@ -163,7 +163,7 @@ class QscRefinement:
             "step": 0,
             "feature_dim": fv_matrix.shape[1] - 1,
             "max_q_error": round(qsc.current_max_q_error, 1),
-            "partition_count": len(qsc.partitions),
+            "partition_count": len(qsc.blocks),
             "witness_pair_count": 0,  # No witnesses at initial state
             "calculation_time_in_seconds": round(elapsed_time, 6)
         }
@@ -211,7 +211,7 @@ class QscRefinement:
     def _do_common_workflow(self, q, max_step, max_color_count, qsc):
         self.last_completed_step = qsc.current_step
         self.last_max_q_error = qsc.current_max_q_error
-        while self.last_completed_step < max_step and self.last_max_q_error > q and len(qsc.partitions) < max_color_count:
+        while self.last_completed_step < max_step and self.last_max_q_error > q and len(qsc.blocks) < max_color_count:
 
             start_time = time.time()
             self.logger.info(f"Refining for step={self.last_completed_step + 1}...")
@@ -225,7 +225,7 @@ class QscRefinement:
                 "step": current_step,
                 "feature_dim": fv_matrix.shape[1] - 1,
                 "max_q_error": max_q_error,
-                "partition_count": len(qsc.partitions),
+                "partition_count": len(qsc.blocks),
                 "witness_pair_count": witness_pair_count,
                 "calculation_time_in_seconds": elapsed_time
             }
@@ -233,7 +233,7 @@ class QscRefinement:
             # save feature vector matrix
             fvm_filename = f"step_{current_step}.pkl"
             fvm_path = os.path.join(self.fvm_dir_path, fvm_filename)
-            fvm_difference = fv_matrix[:, -len(qsc.partitions):]
+            fvm_difference = fv_matrix[:, -len(qsc.blocks):]
             with open(fvm_path, "wb") as f:
                 pickle.dump((fvm_difference, params), f)
 
